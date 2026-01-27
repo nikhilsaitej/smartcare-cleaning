@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { ShoppingCart, Menu, Phone, X } from "lucide-react";
+import { ShoppingCart, Menu, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { COMPANY_INFO } from "@/lib/constants";
@@ -21,10 +21,10 @@ export default function Navbar() {
   const NavLinks = () => (
     <>
       <Link href="/" className="text-sm font-medium hover:text-primary transition-colors cursor-pointer">Home</Link>
-      <Link href="#about" className="text-sm font-medium hover:text-primary transition-colors cursor-pointer">About Us</Link>
-      <Link href="#services" className="text-sm font-medium hover:text-primary transition-colors cursor-pointer">Services</Link>
-      <Link href="#products" className="text-sm font-medium hover:text-primary transition-colors cursor-pointer">Products</Link>
-      <Link href="#contact" className="text-sm font-medium hover:text-primary transition-colors cursor-pointer">Contact</Link>
+      <Link href="/about" className="text-sm font-medium hover:text-primary transition-colors cursor-pointer">About Us</Link>
+      <Link href="/#services" className="text-sm font-medium hover:text-primary transition-colors cursor-pointer">Services</Link>
+      <Link href="/#products" className="text-sm font-medium hover:text-primary transition-colors cursor-pointer">Products</Link>
+      <Link href="/contact" className="text-sm font-medium hover:text-primary transition-colors cursor-pointer">Contact</Link>
     </>
   );
 
@@ -66,10 +66,12 @@ export default function Navbar() {
             <Phone className="h-4 w-4" />
             {COMPANY_INFO.phone}
           </a>
-          <Button size="icon" variant="ghost" className="relative text-gray-700 hover:bg-gray-100">
-            <ShoppingCart className="h-5 w-5" />
-            <span className="absolute top-1 right-1 h-2 w-2 bg-orange-500 rounded-full" />
-          </Button>
+          <Link href="/cart">
+            <Button size="icon" variant="ghost" className="relative text-gray-700 hover:bg-gray-100">
+              <ShoppingCart className="h-5 w-5" />
+              <span className="absolute top-1 right-1 h-2 w-2 bg-orange-500 rounded-full" />
+            </Button>
+          </Link>
           <Button className="bg-orange-500 hover:bg-orange-600 text-white font-semibold shadow-md shadow-orange-500/20">
             Book Now
           </Button>
@@ -77,9 +79,11 @@ export default function Navbar() {
 
         {/* Mobile Menu */}
         <div className="md:hidden flex items-center gap-4">
-           <Button size="icon" variant="ghost" className="relative text-gray-700">
-            <ShoppingCart className="h-5 w-5" />
-          </Button>
+          <Link href="/cart">
+            <Button size="icon" variant="ghost" className="relative text-gray-700">
+              <ShoppingCart className="h-5 w-5" />
+            </Button>
+          </Link>
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon">
