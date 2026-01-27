@@ -1,4 +1,4 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { ShoppingCart, Menu, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
+  const [location] = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -20,11 +21,11 @@ export default function Navbar() {
 
   const NavLinks = () => (
     <>
-      <Link href="/" className="text-sm font-medium hover:text-primary transition-colors cursor-pointer">Home</Link>
-      <Link href="/about" className="text-sm font-medium hover:text-primary transition-colors cursor-pointer">About Us</Link>
-      <Link href="/#services" className="text-sm font-medium hover:text-primary transition-colors cursor-pointer">Services</Link>
+      <Link href="/" className={cn("text-sm font-medium hover:text-primary transition-colors cursor-pointer", location === "/" && "text-primary font-bold")}>Home</Link>
+      <Link href="/about" className={cn("text-sm font-medium hover:text-primary transition-colors cursor-pointer", location === "/about" && "text-primary font-bold")}>About Us</Link>
+      <Link href="/services" className={cn("text-sm font-medium hover:text-primary transition-colors cursor-pointer", location === "/services" && "text-primary font-bold")}>Services</Link>
       <Link href="/#products" className="text-sm font-medium hover:text-primary transition-colors cursor-pointer">Products</Link>
-      <Link href="/contact" className="text-sm font-medium hover:text-primary transition-colors cursor-pointer">Contact</Link>
+      <Link href="/contact" className={cn("text-sm font-medium hover:text-primary transition-colors cursor-pointer", location === "/contact" && "text-primary font-bold")}>Contact</Link>
     </>
   );
 
