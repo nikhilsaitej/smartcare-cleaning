@@ -1,0 +1,317 @@
+🎯 OBJECTIVE
+
+Create a high-converting, trust-driven, scalable landing page for
+SmartCare Cleaning Solutions that:
+
+Converts visitors into bookings & product orders
+
+Clearly explains why SmartCare is trustworthy
+
+Is easy for admins to manage & scale
+
+Works perfectly on mobile and desktop
+
+Matches the visual style and layout logic of the provided reference images (clean, soft blue, professional, Indian market friendly)
+
+🧠 TARGET USERS
+
+Primary Users
+
+Home owners
+
+Apartment residents
+
+Office managers
+
+Shop owners
+
+Admin Users
+
+Business owner
+
+Operations manager
+
+Staff coordinator
+
+🛠 TECH STACK (MANDATORY)
+
+Frontend: Next.js (React + App Router)
+
+Styling: Tailwind CSS
+
+State: React Server Components + client components where needed
+
+Animations: Framer Motion (subtle only)
+
+Backend (future-ready): Spring Boot REST APIs
+
+Database (future-ready): PostgreSQL
+
+CMS-style control: Admin-editable sections
+
+🎨 VISUAL DESIGN REQUIREMENTS
+Color Palette
+
+Primary: Soft professional blue
+
+Accent: Orange (CTAs only)
+
+Background: White + sky-blue gradients
+
+No dark themes
+
+No neon or vibrant colors
+
+Style
+
+Clean
+
+Trustworthy
+
+Spacious
+
+Rounded cards
+
+Subtle shadows
+
+Illustration + real images mix
+
+🧩 LANDING PAGE STRUCTURE (VERY IMPORTANT)
+1️⃣ HERO SECTION (MOST IMPORTANT)
+
+Purpose: Instant trust + action
+
+Left side (text):
+
+Headline:
+
+Housekeeping Supplies & Professional Cleaning Services in Vijayawada
+
+Subtext:
+
+Trusted by 100+ local customers for homes, offices & apartments
+
+Bullet points:
+
+Same-Day Delivery
+
+Affordable & Reliable
+
+Small Orders & Bulk Supply
+
+Primary CTA:
+
+Get Quote (orange)
+
+Secondary CTA:
+
+Book Home Cleaning
+
+Right side (visual):
+
+Illustrated cleaning team
+
+Cleaning tools bucket
+
+Centered trust badge:
+“Trusted by 100+ Local Customers”
+
+2️⃣ TRUST & SOCIAL PROOF STRIP
+
+Icons + text:
+
+100+ Happy Customers
+
+Local Vijayawada Business
+
+Fast Response
+
+Secure Payments
+
+Optional Google-style rating
+
+3️⃣ SERVICES SECTION
+
+Cards:
+
+Home Cleaning
+
+Office & Shop Cleaning
+
+Deep Cleaning
+
+Move-In / Move-Out
+
+Each card:
+
+Image
+
+1-line value
+
+Rating
+
+CTA: Book Now
+
+4️⃣ PRODUCTS PREVIEW
+
+Popular products grid:
+
+Phenyl
+
+Disinfectants
+
+Floor cleaners
+
+Cleaning tools
+
+Show:
+
+Price
+
+Rating
+
+“Add to Cart”
+
+CTA: Shop Now
+
+5️⃣ WHY CHOOSE SMARTCARE (ADMIN CONFIDENCE SECTION)
+
+Explain why this business will not fail:
+
+Local focus
+
+Repeat customers
+
+Combination of services + products
+
+WhatsApp-first communication
+
+Scalable operations
+
+This section should be editable by admin.
+
+6️⃣ HOW IT WORKS (REDUCES USER FEAR)
+
+Steps:
+
+Choose service / product
+
+Select date & time
+
+Get confirmation on WhatsApp
+
+Service delivered
+
+7️⃣ ADMIN-FRIENDLY SECTION (IMPORTANT)
+
+Explain internally (hidden or CMS-controlled):
+
+Admin can:
+
+Enable / disable services
+
+Update pricing
+
+Control availability
+
+View bookings
+
+View analytics
+
+Designed for non-technical admin
+
+8️⃣ FINAL CTA (CONVERSION PUSH)
+
+Large CTA section:
+
+“Ready for a cleaner, safer space?”
+
+Buttons:
+
+Book Home Cleaning
+
+Get Quote on WhatsApp
+
+9️⃣ FOOTER
+
+Logo
+
+Contact number
+
+WhatsApp link
+
+Payment icons
+
+QR code
+
+Address
+
+Trust badges
+
+📱 RESPONSIVENESS RULES
+
+Mobile first
+
+Sticky CTA on mobile
+
+No horizontal scrolling
+
+Thumb-friendly buttons
+
+⚡ PERFORMANCE & UX
+
+Fast load
+
+Lazy loading images
+
+SEO optimized
+
+Minimal JS
+
+High Lighthouse score
+
+🔐 SECURITY & FUTURE SCALE
+
+API-ready architecture
+
+Role-based admin control
+
+Secure forms
+
+Spam protection
+
+🎯 OUTPUT REQUIRED
+
+Generate:
+
+Clean Next.js landing page
+
+Modular components
+
+Editable sections (admin-ready)
+
+Production-quality UI
+
+No placeholder nonsense
+
+❌ DO NOT
+
+Do not overdesign
+
+Do not copy existing brands
+
+Do not clutter UI
+
+Do not use dark or flashy styles
+
+✅ FINAL GOAL
+
+This landing page should:
+
+Convince users to book
+
+Convince admins this business is scalable
+
+Convince funders this will work
+
+Look professional, local, and trustworthy
