@@ -24,7 +24,7 @@ export default function Navbar() {
       <Link href="/" className={cn("text-sm font-medium hover:text-primary transition-colors cursor-pointer", location === "/" && "text-primary font-bold")}>Home</Link>
       <Link href="/about" className={cn("text-sm font-medium hover:text-primary transition-colors cursor-pointer", location === "/about" && "text-primary font-bold")}>About Us</Link>
       <Link href="/services" className={cn("text-sm font-medium hover:text-primary transition-colors cursor-pointer", location === "/services" && "text-primary font-bold")}>Services</Link>
-      <Link href="/#products" className="text-sm font-medium hover:text-primary transition-colors cursor-pointer">Products</Link>
+      <Link href="/products" className={cn("text-sm font-medium hover:text-primary transition-colors cursor-pointer", location === "/products" && "text-primary font-bold")}>Products</Link>
       <Link href="/contact" className={cn("text-sm font-medium hover:text-primary transition-colors cursor-pointer", location === "/contact" && "text-primary font-bold")}>Contact</Link>
     </>
   );
