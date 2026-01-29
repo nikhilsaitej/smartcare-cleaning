@@ -3,16 +3,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MapPin, Calendar, Clock, CheckCircle, Smartphone, Truck, ShieldCheck, Zap } from "lucide-react";
+import { MapPin, Calendar, Clock, CheckCircle } from "lucide-react";
 import heroBg from "@/assets/hero-bg.png";
 import cleanerMan from "@/assets/cleaner-man.png";
 
 export default function Hero() {
   return (
-    <div className="relative min-h-screen flex items-center pt-24 pb-16 overflow-hidden bg-white">
+    <div className="relative min-h-[90vh] flex items-center pt-20 overflow-hidden bg-sky-50">
       {/* Background with Overlay */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-r from-white via-white/80 to-transparent z-10" />
+        <div className="absolute inset-0 bg-gradient-to-r from-white/90 via-white/70 to-transparent z-10" />
         <img 
           src={heroBg} 
           alt="Clean Living Room" 
@@ -23,48 +23,52 @@ export default function Hero() {
       <div className="container mx-auto px-4 relative z-20 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
         
         {/* Left Content */}
-        <div className="lg:col-span-7 space-y-8">
+        <div className="lg:col-span-7 space-y-6">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-600 px-4 py-1.5 rounded-full text-sm font-bold mb-6 border border-blue-100 shadow-sm">
-              <Zap className="h-4 w-4 fill-blue-600" />
-              Vijayawada's Most Trusted Cleaning Partner
+            <div className="inline-flex items-center gap-2 bg-blue-100 text-primary px-3 py-1 rounded-full text-xs font-bold mb-4">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+              </span>
+              #1 Cleaning Service in Vijayawada
             </div>
             
-            <h1 className="text-4xl md:text-5xl lg:text-7xl font-extrabold font-display text-primary leading-[1.05] mb-8 tracking-tight">
-              Housekeeping Supplies <br />
-              <span className="text-orange-500">& Professional</span> <br />
-              Cleaning Services
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold font-display text-primary leading-[1.1] mb-6">
+              Professional <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">
+                Cleaning Solutions
+              </span>
             </h1>
             
-            <p className="text-xl text-slate-600 max-w-xl mb-10 leading-relaxed font-medium">
-              Trusted by <span className="text-primary font-bold">100+ local customers</span> for homes, offices & apartments across Vijayawada.
+            <p className="text-lg text-gray-600 max-w-xl mb-8 leading-relaxed">
+              Experience the joy of a spotless home. We provide top-rated deep cleaning services and high-quality housekeeping supplies.
             </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
-              {[
-                { icon: Truck, text: "Same-Day Delivery" },
-                { icon: ShieldCheck, text: "Affordable & Reliable" },
-                { icon: Zap, text: "Small Orders & Bulk" }
-              ].map((item, idx) => (
-                <div key={idx} className="flex items-center gap-3 bg-white/50 backdrop-blur-sm p-3 rounded-xl border border-white/50 shadow-sm">
-                  <div className="h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center shrink-0">
-                    <item.icon className="h-5 w-5 text-primary" />
-                  </div>
-                  <span className="text-sm font-bold text-slate-700">{item.text}</span>
-                </div>
-              ))}
+            <div className="flex flex-wrap gap-4 text-sm text-gray-700 font-medium mb-8">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-green-500" />
+                <span>Verified Professionals</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-green-500" />
+                <span>Eco-Friendly Chemicals</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-green-500" />
+                <span>100% Satisfaction</span>
+              </div>
             </div>
 
             <div className="flex flex-wrap gap-4">
-               <Button size="lg" className="bg-orange-500 hover:bg-orange-600 text-white font-black px-10 h-16 text-xl shadow-2xl shadow-orange-500/30 rounded-full transition-transform hover:scale-105 active:scale-95">
-                Get Quote
+               <Button size="lg" className="bg-orange-500 hover:bg-orange-600 text-white font-bold px-8 h-12 shadow-lg shadow-orange-500/20 rounded-full">
+                Book a Service
               </Button>
-               <Button size="lg" variant="outline" className="border-2 border-primary text-primary hover:bg-blue-50 font-black px-10 h-16 text-xl rounded-full transition-transform hover:scale-105 active:scale-95">
-                Book Cleaning
+               <Button size="lg" variant="outline" className="border-primary text-primary hover:bg-blue-50 font-bold px-8 h-12 rounded-full">
+                View Products
               </Button>
             </div>
           </motion.div>
@@ -72,21 +76,15 @@ export default function Hero() {
 
         {/* Right Booking Card */}
         <div className="lg:col-span-5 relative">
-          {/* Trust Badge */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
-            animate={{ opacity: 1, scale: 1, rotate: 0 }}
-            transition={{ duration: 0.5, delay: 0.6 }}
-            className="absolute -top-12 -left-12 z-20 bg-white p-4 rounded-2xl shadow-2xl border border-blue-50 transform hover:scale-110 transition-transform"
-          >
-            <div className="flex flex-col items-center">
-              <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center mb-2">
-                <CheckCircle className="h-6 w-6 text-green-600" />
-              </div>
-              <span className="text-[10px] font-black uppercase text-slate-400">Verified Service</span>
-              <span className="text-sm font-bold text-primary">Trusted by 100+</span>
-            </div>
-          </motion.div>
+          {/* Floating Person Image (Desktop Only) */}
+          <motion.img
+             initial={{ opacity: 0, scale: 0.8, x: 50 }}
+             animate={{ opacity: 1, scale: 1, x: 0 }}
+             transition={{ duration: 0.7, delay: 0.2 }}
+             src={cleanerMan}
+             alt="Professional Cleaner"
+             className="hidden lg:block absolute -right-12 -top-24 w-80 h-80 object-contain z-0 pointer-events-none drop-shadow-2xl"
+          />
 
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -94,58 +92,65 @@ export default function Hero() {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="relative z-10"
           >
-            <Card className="glass-card shadow-2xl border-white/80 overflow-hidden backdrop-blur-xl">
-              <div className="bg-primary p-6 border-b border-white/20">
-                <h3 className="font-bold text-xl text-white flex items-center gap-3">
-                  <Calendar className="h-6 w-6 text-orange-400" />
-                  Quick Booking
+            <Card className="glass-card shadow-xl border-white/50 overflow-hidden">
+              <div className="bg-primary/5 p-4 border-b border-primary/10">
+                <h3 className="font-bold text-lg text-primary flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Book Home Cleaning
                 </h3>
-                <p className="text-blue-100 text-xs mt-1">Confirmed on WhatsApp in 15 mins</p>
               </div>
-              <CardContent className="p-8 space-y-6">
+              <CardContent className="p-6 space-y-4">
                 <div className="space-y-2">
-                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Full Name</label>
-                  <Input placeholder="Your Name" className="h-12 bg-white/50 border-slate-100 focus:bg-white transition-all" />
+                  <label className="text-xs font-semibold text-gray-500 uppercase">Your Name</label>
+                  <Input placeholder="Enter your name" className="bg-white/50" />
                 </div>
                 
                 <div className="space-y-2">
-                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Mobile Number</label>
+                  <label className="text-xs font-semibold text-gray-500 uppercase">Mobile Number</label>
                   <div className="flex">
-                    <span className="flex items-center px-4 border border-r-0 rounded-l-xl bg-slate-50 text-slate-500 font-bold border-slate-100">
+                    <span className="flex items-center px-3 border border-r-0 rounded-l-md bg-gray-50 text-gray-500 text-sm font-medium border-input">
                       +91
                     </span>
-                    <Input placeholder="98765 43210" className="h-12 rounded-l-none bg-white/50 border-slate-100 focus:bg-white transition-all" />
+                    <Input placeholder="98765 43210" className="rounded-l-none bg-white/50" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Date</label>
-                    <Input type="date" className="h-12 bg-white/50 border-slate-100" />
-                  </div>
-                   <div className="space-y-2">
-                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Type</label>
+                    <label className="text-xs font-semibold text-gray-500 uppercase">Date</label>
                     <Select>
-                      <SelectTrigger className="h-12 bg-white/50 border-slate-100">
-                        <SelectValue placeholder="Select" />
+                      <SelectTrigger className="bg-white/50">
+                        <SelectValue placeholder="Select Date" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="home">Home Deep Clean</SelectItem>
-                        <SelectItem value="office">Office Clean</SelectItem>
-                        <SelectItem value="supplies">Only Supplies</SelectItem>
+                        <SelectItem value="today">Today</SelectItem>
+                        <SelectItem value="tomorrow">Tomorrow</SelectItem>
+                        <SelectItem value="weekend">This Weekend</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                   <div className="space-y-2">
+                    <label className="text-xs font-semibold text-gray-500 uppercase">Service</label>
+                    <Select>
+                      <SelectTrigger className="bg-white/50">
+                        <SelectValue placeholder="Select Type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="home">Home Cleaning</SelectItem>
+                        <SelectItem value="office">Office Cleaning</SelectItem>
+                        <SelectItem value="deep">Deep Cleaning</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
 
-                <Button className="w-full bg-primary hover:bg-primary/90 text-white font-black h-16 text-xl shadow-xl transition-all hover:translate-y-[-2px] active:translate-y-0 rounded-xl">
-                  Book Now
+                <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold h-12 text-lg shadow-md mt-2">
+                  Check Availability
                 </Button>
                 
-                <div className="flex items-center justify-center gap-2 pt-2">
-                  <Smartphone className="h-4 w-4 text-green-500" />
-                  <span className="text-xs font-bold text-slate-500 uppercase tracking-tighter">Confirmation sent via WhatsApp</span>
-                </div>
+                <p className="text-xs text-center text-gray-500 mt-2">
+                  Get a callback within 15 minutes
+                </p>
               </CardContent>
             </Card>
           </motion.div>
