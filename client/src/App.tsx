@@ -14,6 +14,7 @@ import Products from "@/pages/Products";
 import Login from "@/pages/Login";
 import Signup from "@/pages/Signup";
 import ForgotPassword from "@/pages/ForgotPassword";
+import AuthCallback from "@/pages/AuthCallback";
 import Admin from "@/pages/Admin";
 import NotFound from "@/pages/not-found";
 
@@ -29,6 +30,7 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/signup" component={Signup} />
       <Route path="/forgot-password" component={ForgotPassword} />
+      <Route path="/auth/callback" component={AuthCallback} />
       <Route path="/admin" component={Admin} />
       <Route component={NotFound} />
     </Switch>
