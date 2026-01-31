@@ -29,6 +29,8 @@ interface Booking {
   created_at: string;
 }
 
+const ADMIN_EMAIL = "smartcarecleaningsolutions@gmail.com";
+
 export default function Admin() {
   const { user, loading: authLoading } = useAuth();
   const [, setLocation] = useLocation();
@@ -36,11 +38,16 @@ export default function Admin() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const isAdmin = user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+
   useEffect(() => {
     if (!authLoading && !user) {
       setLocation("/login");
     }
-  }, [user, authLoading, setLocation]);
+    if (!authLoading && user && !isAdmin) {
+      setLocation("/");
+    }
+  }, [user, authLoading, isAdmin, setLocation]);
 
   useEffect(() => {
     async function fetchData() {
@@ -79,7 +86,7 @@ export default function Admin() {
     );
   }
 
-  if (!user) {
+  if (!user || !isAdmin) {
     return null;
   }
 
