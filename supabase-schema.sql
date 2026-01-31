@@ -72,9 +72,8 @@ CREATE POLICY "Products are viewable by everyone" ON products FOR SELECT USING (
 -- Policies for services (public read)
 CREATE POLICY "Services are viewable by everyone" ON services FOR SELECT USING (true);
 
--- Policies for bookings (users can manage their own)
+-- Policies for bookings (users can manage their own, guests can create with null user_id)
 CREATE POLICY "Users can view their own bookings" ON bookings FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can create bookings" ON bookings FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Anyone can create bookings" ON bookings FOR INSERT WITH CHECK (true);
 
 -- Policies for contacts (anyone can submit)

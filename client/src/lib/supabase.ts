@@ -24,4 +24,6 @@ export function getSupabase(): Promise<SupabaseClient> {
   return initPromise;
 }
 
-export { supabaseInstance as supabase };
+export function getSupabaseSync(): SupabaseClient | null {
+  return supabaseInstance;
+}

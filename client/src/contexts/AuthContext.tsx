@@ -19,6 +19,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let subscription: { unsubscribe: () => void } | null = null;
+    
     const initAuth = async () => {
       try {
         const supabase = await getSupabase();
@@ -27,14 +29,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
         
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        const { data: { subscription: sub } } = supabase.auth.onAuthStateChange(
           async (event, session) => {
             setSession(session);
             setUser(session?.user ?? null);
           }
         );
-
-        return () => subscription.unsubscribe();
+        subscription = sub;
       } catch (error) {
         console.error("Auth init error:", error);
       } finally {
@@ -43,6 +44,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     initAuth();
+    
+    return () => {
+      if (subscription) {
+        subscription.unsubscribe();
+      }
+    };
   }, []);
 
   const signUp = async (email: string, password: string) => {
