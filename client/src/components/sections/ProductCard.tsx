@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Star, Plus } from "lucide-react";
+import { ShoppingCart, Star, Plus, Minus } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 
 interface ProductProps {
@@ -16,10 +16,21 @@ interface ProductProps {
 }
 
 export default function ProductCard({ id, title, category, price, originalPrice, rating, image, tag }: ProductProps) {
-  const { addToCart } = useCart();
+  const { items, addToCart, updateQuantity } = useCart();
+  
+  const cartItem = items.find(item => item.id === id);
+  const quantity = cartItem?.quantity || 0;
 
   const handleAddToCart = () => {
     addToCart({ id, title, category, price, originalPrice, rating, image, tag });
+  };
+
+  const handleIncrease = () => {
+    updateQuantity(id, quantity + 1);
+  };
+
+  const handleDecrease = () => {
+    updateQuantity(id, quantity - 1);
   };
 
   return (
@@ -69,15 +80,40 @@ export default function ProductCard({ id, title, category, price, originalPrice,
                 <span className="text-xs text-gray-400 line-through">₹{originalPrice}</span>
               )}
             </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="h-8 border-blue-200 text-blue-600 hover:bg-blue-50"
-              onClick={handleAddToCart}
-              data-testid={`button-add-${id}`}
-            >
-              <Plus className="h-3 w-3 mr-1" /> Add
-            </Button>
+            
+            {quantity > 0 ? (
+              <div className="flex items-center gap-2 bg-slate-100 rounded-lg p-1">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-7 w-7 hover:bg-white"
+                  onClick={handleDecrease}
+                  data-testid={`button-decrease-${id}`}
+                >
+                  <Minus className="h-3 w-3" />
+                </Button>
+                <span className="font-bold w-5 text-center text-sm" data-testid={`text-qty-${id}`}>{quantity}</span>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-7 w-7 hover:bg-white"
+                  onClick={handleIncrease}
+                  data-testid={`button-increase-${id}`}
+                >
+                  <Plus className="h-3 w-3" />
+                </Button>
+              </div>
+            ) : (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-8 border-blue-200 text-blue-600 hover:bg-blue-50"
+                onClick={handleAddToCart}
+                data-testid={`button-add-${id}`}
+              >
+                <Plus className="h-3 w-3 mr-1" /> Add
+              </Button>
+            )}
           </div>
         </div>
       </CardContent>

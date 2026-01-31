@@ -1,9 +1,8 @@
 import { Link, useLocation } from "wouter";
-import { ShoppingCart, Menu, Phone, User, LogOut } from "lucide-react";
+import { ShoppingCart, Menu, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { COMPANY_INFO } from "@/lib/constants";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import logo from "@/assets/logo.png";
@@ -32,10 +31,9 @@ export default function Navbar() {
   const NavLinks = () => (
     <>
       <Link href="/" className={cn("text-sm font-medium hover:text-primary transition-colors cursor-pointer", location === "/" && "text-primary font-bold")} data-testid="link-home">Home</Link>
-      <Link href="/about" className={cn("text-sm font-medium hover:text-primary transition-colors cursor-pointer", location === "/about" && "text-primary font-bold")} data-testid="link-about">About Us</Link>
-      <Link href="/services" className={cn("text-sm font-medium hover:text-primary transition-colors cursor-pointer", location === "/services" && "text-primary font-bold")} data-testid="link-services">Services</Link>
       <Link href="/products" className={cn("text-sm font-medium hover:text-primary transition-colors cursor-pointer", location === "/products" && "text-primary font-bold")} data-testid="link-products">Products</Link>
-      <Link href="/contact" className={cn("text-sm font-medium hover:text-primary transition-colors cursor-pointer", location === "/contact" && "text-primary font-bold")} data-testid="link-contact">Contact</Link>
+      <Link href="/services" className={cn("text-sm font-medium hover:text-primary transition-colors cursor-pointer", location === "/services" && "text-primary font-bold")} data-testid="link-services">Services</Link>
+      <Link href="/contact" className={cn("text-sm font-medium hover:text-primary transition-colors cursor-pointer", location === "/contact" && "text-primary font-bold")} data-testid="link-contact">Contact Us</Link>
     </>
   );
 
@@ -73,10 +71,6 @@ export default function Navbar() {
 
         {/* Actions */}
         <div className="hidden md:flex items-center gap-4">
-          <a href={`tel:${COMPANY_INFO.phone}`} className="flex items-center gap-2 text-primary font-semibold text-sm">
-            <Phone className="h-4 w-4" />
-            {COMPANY_INFO.phone}
-          </a>
           <Link href="/cart">
             <Button size="icon" variant="ghost" className="relative text-gray-700 hover:bg-gray-100" data-testid="button-cart">
               <ShoppingCart className="h-5 w-5" />
@@ -106,7 +100,8 @@ export default function Navbar() {
               </DropdownMenu>
             ) : (
               <Link href="/login">
-                <Button className="bg-orange-500 hover:bg-orange-600 text-white font-semibold shadow-md shadow-orange-500/20" data-testid="button-login-nav">
+                <Button className="bg-orange-500 hover:bg-orange-600 text-white font-semibold shadow-md shadow-orange-500/20 gap-2" data-testid="button-login-nav">
+                  <User className="h-4 w-4" />
                   Login
                 </Button>
               </Link>
@@ -154,7 +149,10 @@ export default function Navbar() {
                     ) : (
                       <>
                         <Link href="/login">
-                          <Button className="w-full bg-orange-500 hover:bg-orange-600">Login</Button>
+                          <Button className="w-full bg-orange-500 hover:bg-orange-600 gap-2">
+                            <User className="h-4 w-4" />
+                            Login
+                          </Button>
                         </Link>
                         <Link href="/signup">
                           <Button variant="outline" className="w-full">Sign Up</Button>
@@ -162,10 +160,6 @@ export default function Navbar() {
                       </>
                     )
                   )}
-                  <a href={`tel:${COMPANY_INFO.phone}`} className="flex items-center justify-center gap-2 text-primary font-bold">
-                    <Phone className="h-4 w-4" />
-                    {COMPANY_INFO.phone}
-                  </a>
                 </div>
               </div>
             </SheetContent>
