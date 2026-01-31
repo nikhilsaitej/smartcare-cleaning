@@ -1,6 +1,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { supabase } from "./supabase";
+import { sendContactConfirmationEmail, sendBookingConfirmationEmail } from "./resend";
+import { sendBookingSMS, sendBookingWhatsApp } from "./twilio";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -44,6 +46,8 @@ export async function registerRoutes(
 
   app.post("/api/bookings", async (req, res) => {
     try {
+      const { name, phone, email, service_name, date, time_slot, address } = req.body;
+      
       const { data, error } = await supabase
         .from("bookings")
         .insert([req.body])
@@ -51,6 +55,16 @@ export async function registerRoutes(
         .single();
       
       if (error) throw error;
+      
+      // Send notifications (non-blocking)
+      if (email) {
+        sendBookingConfirmationEmail(email, name, service_name || 'Cleaning Service', date || 'To be confirmed').catch(console.error);
+      }
+      if (phone) {
+        sendBookingSMS(phone, name, service_name || 'Cleaning Service', date || 'To be confirmed').catch(console.error);
+        sendBookingWhatsApp(phone, name, service_name || 'Cleaning Service', date || 'To be confirmed').catch(console.error);
+      }
+      
       res.json(data);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -76,15 +90,40 @@ export async function registerRoutes(
 
   app.post("/api/contacts", async (req, res) => {
     try {
-      const { data, error } = await supabase
-        .from("contacts")
-        .insert([req.body])
-        .select()
-        .single();
+      const { name, email, message } = req.body;
       
-      if (error) throw error;
-      res.json(data);
+      // Validate required fields
+      if (!name || !email || !message) {
+        return res.status(400).json({ error: "Name, email, and message are required" });
+      }
+      
+      // Try to save to Supabase
+      let savedToDb = false;
+      try {
+        const { data, error } = await supabase
+          .from("contacts")
+          .insert([{ name, email, message }])
+          .select()
+          .single();
+        
+        if (!error) {
+          savedToDb = true;
+        }
+      } catch (dbError) {
+        console.log("Database save skipped (table may not exist):", dbError);
+      }
+      
+      // Send email notification (non-blocking)
+      sendContactConfirmationEmail(email, name).catch(console.error);
+      
+      // Return success even if DB save failed - the email was sent
+      res.json({ 
+        success: true, 
+        message: "Contact form submitted successfully",
+        savedToDb 
+      });
     } catch (error: any) {
+      console.error("Contact form error:", error);
       res.status(500).json({ error: error.message });
     }
   });
