@@ -213,5 +213,40 @@ export async function registerRoutes(
     }
   });
 
+  // Admin routes
+  app.get("/api/admin/contacts", async (req, res) => {
+    try {
+      const { data, error } = await supabase
+        .from("contacts")
+        .select("*")
+        .order("created_at", { ascending: false });
+      
+      if (error) {
+        console.log("Contacts table may not exist:", error.message);
+        return res.json([]);
+      }
+      res.json(data || []);
+    } catch (error: any) {
+      res.json([]);
+    }
+  });
+
+  app.get("/api/admin/bookings", async (req, res) => {
+    try {
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("*")
+        .order("created_at", { ascending: false });
+      
+      if (error) {
+        console.log("Bookings table may not exist:", error.message);
+        return res.json([]);
+      }
+      res.json(data || []);
+    } catch (error: any) {
+      res.json([]);
+    }
+  });
+
   return httpServer;
 }

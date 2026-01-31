@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { ShoppingCart, Menu, User, LogOut } from "lucide-react";
+import { ShoppingCart, Menu, User, LogOut, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -92,6 +92,12 @@ export default function Navbar() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  <Link href="/admin">
+                    <DropdownMenuItem className="cursor-pointer" data-testid="link-admin">
+                      <Settings className="h-4 w-4 mr-2" />
+                      Admin Dashboard
+                    </DropdownMenuItem>
+                  </Link>
                   <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer" data-testid="button-logout">
                     <LogOut className="h-4 w-4 mr-2" />
                     Sign Out
@@ -141,6 +147,12 @@ export default function Navbar() {
                           <User className="h-4 w-4" />
                           <span>{user.email}</span>
                         </div>
+                        <Link href="/admin">
+                          <Button variant="outline" className="w-full gap-2">
+                            <Settings className="h-4 w-4" />
+                            Admin Dashboard
+                          </Button>
+                        </Link>
                         <Button variant="outline" onClick={handleSignOut} className="w-full">
                           <LogOut className="h-4 w-4 mr-2" />
                           Sign Out
