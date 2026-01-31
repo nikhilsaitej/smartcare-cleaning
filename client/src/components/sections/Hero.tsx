@@ -76,15 +76,6 @@ export default function Hero() {
 
         {/* Right Booking Card */}
         <div className="lg:col-span-5 relative">
-          {/* Floating Person Image (Desktop Only) */}
-          <motion.img
-             initial={{ opacity: 0, scale: 0.8, x: 50 }}
-             animate={{ opacity: 1, scale: 1, x: 0 }}
-             transition={{ duration: 0.7, delay: 0.2 }}
-             src={cleanerMan}
-             alt="Professional Cleaner"
-             className="hidden lg:block absolute -right-12 -top-24 w-80 h-80 object-contain z-0 pointer-events-none drop-shadow-2xl"
-          />
 
           <motion.div
             initial={{ opacity: 0, y: 30 }}
