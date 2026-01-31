@@ -2,6 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingCart, Star, Plus } from "lucide-react";
+import { useCart } from "@/contexts/CartContext";
 
 interface ProductProps {
   id: string;
@@ -14,7 +15,13 @@ interface ProductProps {
   tag?: string;
 }
 
-export default function ProductCard({ title, category, price, originalPrice, rating, image, tag }: ProductProps) {
+export default function ProductCard({ id, title, category, price, originalPrice, rating, image, tag }: ProductProps) {
+  const { addToCart } = useCart();
+
+  const handleAddToCart = () => {
+    addToCart({ id, title, category, price, originalPrice, rating, image, tag });
+  };
+
   return (
     <Card className="group border border-gray-100 shadow-md hover:shadow-xl hover:border-blue-100 transition-all duration-300">
       <CardContent className="p-4">
@@ -34,6 +41,8 @@ export default function ProductCard({ title, category, price, originalPrice, rat
           <Button 
             size="icon" 
             className="absolute bottom-3 right-3 rounded-full opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 shadow-lg bg-white text-primary hover:bg-primary hover:text-white"
+            onClick={handleAddToCart}
+            data-testid={`button-cart-icon-${id}`}
           >
             <ShoppingCart className="h-4 w-4" />
           </Button>
@@ -60,7 +69,13 @@ export default function ProductCard({ title, category, price, originalPrice, rat
                 <span className="text-xs text-gray-400 line-through">₹{originalPrice}</span>
               )}
             </div>
-            <Button variant="outline" size="sm" className="h-8 border-blue-200 text-blue-600 hover:bg-blue-50">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="h-8 border-blue-200 text-blue-600 hover:bg-blue-50"
+              onClick={handleAddToCart}
+              data-testid={`button-add-${id}`}
+            >
               <Plus className="h-3 w-3 mr-1" /> Add
             </Button>
           </div>
