@@ -69,14 +69,14 @@ export default function Login() {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-cyan-50 via-blue-50 to-teal-50" />
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-orange-50" />
       <div className="absolute inset-0 opacity-30" style={{
-        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2306b6d4' fill-opacity='0.15'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f97316' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
       }} />
       
-      <div className="absolute top-20 left-10 w-72 h-72 bg-cyan-200/30 rounded-full blur-3xl animate-pulse" />
-      <div className="absolute bottom-20 right-10 w-96 h-96 bg-teal-200/30 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-      <div className="absolute top-1/2 left-1/3 w-48 h-48 bg-blue-200/20 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '2s' }} />
+      <div className="absolute top-20 left-10 w-72 h-72 bg-blue-100/30 rounded-full blur-3xl animate-pulse" />
+      <div className="absolute bottom-20 right-10 w-96 h-96 bg-orange-100/30 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+      <div className="absolute top-1/2 left-1/3 w-48 h-48 bg-blue-50/20 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '2s' }} />
 
       <div className="relative min-h-screen flex">
         <div className="hidden lg:flex lg:w-1/2 relative items-center justify-center p-12">
@@ -88,18 +88,18 @@ export default function Login() {
           >
             <div className="mb-8">
               <div className="flex items-center gap-3 mb-6">
-                <div className="h-14 w-14 bg-gradient-to-br from-cyan-500 to-teal-500 rounded-2xl flex items-center justify-center shadow-lg shadow-cyan-500/30">
+                <div className="h-14 w-14 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30">
                   <Sparkles className="h-7 w-7 text-white" />
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold text-slate-800">SmartCare</h1>
-                  <p className="text-sm text-cyan-600 font-medium">Cleaning Solutions</p>
+                  <p className="text-sm text-orange-600 font-bold uppercase tracking-wider">Cleaning Solutions</p>
                 </div>
               </div>
               
               <h2 className="text-4xl font-bold text-slate-800 leading-tight mb-4">
                 Welcome Back to a
-                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-600 to-teal-600">
+                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-orange-500">
                   Cleaner Tomorrow
                 </span>
               </h2>
@@ -121,8 +121,8 @@ export default function Login() {
                   transition={{ delay: 0.3 + i * 0.1 }}
                   className="flex items-center gap-3 text-slate-600"
                 >
-                  <div className="h-10 w-10 bg-gradient-to-br from-cyan-100 to-teal-100 rounded-xl flex items-center justify-center">
-                    <item.icon className="h-5 w-5 text-cyan-600" />
+                  <div className="h-10 w-10 bg-gradient-to-br from-blue-50 to-orange-50 rounded-xl flex items-center justify-center border border-slate-100">
+                    <item.icon className="h-5 w-5 text-blue-600" />
                   </div>
                   <span className="font-medium">{item.text}</span>
                 </motion.div>
@@ -134,14 +134,14 @@ export default function Login() {
                 <img 
                   src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face" 
                   alt="Customer" 
-                  className="w-12 h-12 rounded-full object-cover ring-2 ring-cyan-200"
+                  className="w-12 h-12 rounded-full object-cover ring-2 ring-blue-100"
                 />
                 <div>
                   <p className="text-slate-600 italic text-sm leading-relaxed">
                     "SmartCare transformed our office! The booking system is seamless and their team is incredibly professional."
                   </p>
                   <p className="text-slate-800 font-semibold mt-2 text-sm">Rajesh Kumar</p>
-                  <p className="text-cyan-600 text-xs">Business Owner, Vijayawada</p>
+                  <p className="text-orange-600 text-xs font-bold uppercase tracking-wider">Business Owner, Vijayawada</p>
                 </div>
               </div>
             </div>
@@ -155,17 +155,17 @@ export default function Login() {
             transition={{ duration: 0.6 }}
             className="w-full max-w-md"
           >
-            <Card className="border-0 shadow-2xl shadow-cyan-500/10 bg-white/80 backdrop-blur-xl overflow-hidden">
-              <div className="relative bg-gradient-to-r from-cyan-600 via-teal-600 to-cyan-700 p-8 text-white overflow-hidden">
+            <Card className="border-0 shadow-2xl shadow-blue-500/10 bg-white/80 backdrop-blur-xl overflow-hidden">
+              <div className="relative bg-gradient-to-r from-blue-600 to-blue-800 p-8 text-white overflow-hidden">
                 <div className="absolute inset-0 opacity-20" style={{
                   backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 20.5V18H0v-2h20v-2H0v-2h20v-2H0V8h20V6H0V4h20V2H0V0h22v20.5L20 22l2 1.5V44H0v-2h20v-2H0v-2h20v-2H0v-2h20v-2H0v-2h20v-2z' fill='%23fff' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E")`
                 }} />
                 <div className="relative">
                   <div className="h-16 w-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-4 mx-auto">
-                    <LogIn className="h-8 w-8" />
+                    <LogIn className="h-8 w-8 text-white" />
                   </div>
                   <h1 className="text-2xl font-bold text-center">Welcome Back</h1>
-                  <p className="text-cyan-100 text-center mt-1 text-sm">Sign in to continue your journey</p>
+                  <p className="text-blue-100 text-center mt-1 text-sm">Sign in to continue your journey</p>
                 </div>
               </div>
 
@@ -174,7 +174,7 @@ export default function Login() {
                   <Button
                     type="button"
                     variant="outline"
-                    className="w-full h-12 font-semibold flex items-center justify-center gap-3 border-2 border-slate-200 hover:border-cyan-300 hover:bg-cyan-50/50 transition-all duration-300 rounded-xl"
+                    className="w-full h-12 font-semibold flex items-center justify-center gap-3 border-2 border-slate-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-300 rounded-xl"
                     onClick={handleGoogleSignIn}
                     disabled={googleLoading}
                     data-testid="button-google-login"
@@ -228,22 +228,22 @@ export default function Login() {
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                      <span className="h-1.5 w-1.5 bg-cyan-500 rounded-full" />
+                      <span className="h-1.5 w-1.5 bg-blue-600 rounded-full" />
                       Email or Phone
                     </label>
                     <div className="relative group">
-                      <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-teal-500 rounded-xl opacity-0 group-focus-within:opacity-100 transition-opacity blur-sm -z-10" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-orange-500 rounded-xl opacity-0 group-focus-within:opacity-100 transition-opacity blur-sm -z-10" />
                       {identifier.includes("@") || !identifier ? (
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-cyan-500 transition-colors" />
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
                       ) : (
-                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-cyan-500 transition-colors" />
+                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
                       )}
                       <Input
                         type="text"
                         placeholder="Enter email or phone number"
                         value={identifier}
                         onChange={(e) => setIdentifier(e.target.value)}
-                        className="pl-12 h-14 border-2 border-slate-200 focus:border-cyan-500 focus:ring-0 rounded-xl text-base bg-white/50 backdrop-blur-sm transition-all"
+                        className="pl-12 h-14 border-2 border-slate-200 focus:border-blue-600 focus:ring-0 rounded-xl text-base bg-white/50 backdrop-blur-sm transition-all"
                         required
                         data-testid="input-identifier"
                       />
@@ -253,22 +253,22 @@ export default function Login() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                        <span className="h-1.5 w-1.5 bg-cyan-500 rounded-full" />
+                        <span className="h-1.5 w-1.5 bg-blue-600 rounded-full" />
                         Password
                       </label>
-                      <Link href="/forgot-password" className="text-sm text-cyan-600 hover:text-cyan-700 font-semibold hover:underline transition-colors">
+                      <Link href="/forgot-password" className="text-sm text-blue-600 hover:text-blue-700 font-semibold hover:underline transition-colors">
                         Forgot password?
                       </Link>
                     </div>
                     <div className="relative group">
-                      <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-teal-500 rounded-xl opacity-0 group-focus-within:opacity-100 transition-opacity blur-sm -z-10" />
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-cyan-500 transition-colors" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-orange-500 rounded-xl opacity-0 group-focus-within:opacity-100 transition-opacity blur-sm -z-10" />
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
                       <Input
                         type="password"
                         placeholder="Enter your password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="pl-12 h-14 border-2 border-slate-200 focus:border-cyan-500 focus:ring-0 rounded-xl text-base bg-white/50 backdrop-blur-sm transition-all"
+                        className="pl-12 h-14 border-2 border-slate-200 focus:border-blue-600 focus:ring-0 rounded-xl text-base bg-white/50 backdrop-blur-sm transition-all"
                         required
                         data-testid="input-password"
                       />
@@ -277,7 +277,7 @@ export default function Login() {
 
                   <Button
                     type="submit"
-                    className="w-full h-14 text-lg font-bold bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700 rounded-xl shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 transition-all duration-300"
+                    className="w-full h-14 text-lg font-bold bg-orange-500 hover:bg-orange-600 rounded-xl shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 transition-all duration-300 text-white"
                     disabled={loading}
                     data-testid="button-login"
                   >
@@ -295,7 +295,7 @@ export default function Login() {
                 <div className="mt-8 pt-6 border-t border-slate-100">
                   <p className="text-center text-slate-600">
                     Don't have an account?{" "}
-                    <Link href="/signup" className="text-cyan-600 font-bold hover:text-cyan-700 hover:underline transition-colors">
+                    <Link href="/signup" className="text-blue-600 font-bold hover:text-blue-700 hover:underline transition-colors">
                       Create Account
                     </Link>
                   </p>

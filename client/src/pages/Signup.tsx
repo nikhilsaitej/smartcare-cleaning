@@ -119,14 +119,14 @@ export default function Signup() {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50" />
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-orange-50" />
       <div className="absolute inset-0 opacity-30" style={{
-        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2310b981' fill-opacity='0.15'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f97316' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
       }} />
       
-      <div className="absolute top-10 right-10 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-pulse" />
-      <div className="absolute bottom-10 left-10 w-96 h-96 bg-teal-200/30 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-      <div className="absolute top-1/3 right-1/3 w-64 h-64 bg-cyan-200/20 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '2s' }} />
+      <div className="absolute top-10 right-10 w-80 h-80 bg-blue-100/30 rounded-full blur-3xl animate-pulse" />
+      <div className="absolute bottom-10 left-10 w-96 h-96 bg-orange-100/30 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+      <div className="absolute top-1/3 right-1/3 w-64 h-64 bg-blue-50/20 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '2s' }} />
 
       <div className="relative min-h-screen flex">
         <div className="hidden lg:flex lg:w-1/2 relative items-center justify-center p-12">
@@ -138,18 +138,18 @@ export default function Signup() {
           >
             <div className="mb-8">
               <div className="flex items-center gap-3 mb-6">
-                <div className="h-14 w-14 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                <div className="h-14 w-14 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30">
                   <Sparkles className="h-7 w-7 text-white" />
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold text-slate-800">SmartCare</h1>
-                  <p className="text-sm text-emerald-600 font-medium">Cleaning Solutions</p>
+                  <p className="text-sm text-orange-600 font-bold uppercase tracking-wider">Cleaning Solutions</p>
                 </div>
               </div>
               
               <h2 className="text-4xl font-bold text-slate-800 leading-tight mb-4">
                 Start Your Journey to
-                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-600">
+                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-orange-500">
                   Spotless Spaces
                 </span>
               </h2>
@@ -172,8 +172,8 @@ export default function Signup() {
                   transition={{ delay: 0.3 + i * 0.1 }}
                   className="bg-white/60 backdrop-blur-sm p-4 rounded-2xl border border-white/80 shadow-lg hover:shadow-xl transition-shadow"
                 >
-                  <div className="h-10 w-10 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-xl flex items-center justify-center mb-3">
-                    <item.icon className="h-5 w-5 text-emerald-600" />
+                  <div className="h-10 w-10 bg-gradient-to-br from-blue-50 to-orange-50 rounded-xl flex items-center justify-center mb-3 border border-slate-100">
+                    <item.icon className="h-5 w-5 text-blue-600" />
                   </div>
                   <p className="font-bold text-slate-800 text-sm">{item.title}</p>
                   <p className="text-slate-500 text-xs">{item.desc}</p>
@@ -181,17 +181,17 @@ export default function Signup() {
               ))}
             </div>
 
-            <div className="p-6 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl shadow-xl text-white">
+            <div className="p-6 bg-gradient-to-r from-blue-600 to-blue-800 rounded-2xl shadow-xl text-white">
               <div className="flex items-center gap-3 mb-3">
                 <div className="h-12 w-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
                   <Gift className="h-6 w-6" />
                 </div>
                 <div>
                   <p className="font-bold text-lg">New Member Offer!</p>
-                  <p className="text-emerald-100 text-sm">Limited time only</p>
+                  <p className="text-blue-100 text-sm">Limited time only</p>
                 </div>
               </div>
-              <p className="text-emerald-50 text-sm">
+              <p className="text-blue-50 text-sm">
                 Sign up today and get <span className="font-bold text-white">20% OFF</span> on your first cleaning service. Plus, earn reward points with every booking!
               </p>
             </div>
@@ -205,17 +205,17 @@ export default function Signup() {
             transition={{ duration: 0.6 }}
             className="w-full max-w-md"
           >
-            <Card className="border-0 shadow-2xl shadow-emerald-500/10 bg-white/80 backdrop-blur-xl overflow-hidden">
-              <div className="relative bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 p-8 text-white overflow-hidden">
+            <Card className="border-0 shadow-2xl shadow-blue-500/10 bg-white/80 backdrop-blur-xl overflow-hidden">
+              <div className="relative bg-gradient-to-r from-blue-600 to-blue-800 p-8 text-white overflow-hidden">
                 <div className="absolute inset-0 opacity-20" style={{
                   backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 20.5V18H0v-2h20v-2H0v-2h20v-2H0V8h20V6H0V4h20V2H0V0h22v20.5L20 22l2 1.5V44H0v-2h20v-2H0v-2h20v-2H0v-2h20v-2H0v-2h20v-2z' fill='%23fff' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E")`
                 }} />
                 <div className="relative">
                   <div className="h-16 w-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-4 mx-auto">
-                    <UserPlus className="h-8 w-8" />
+                    <UserPlus className="h-8 w-8 text-white" />
                   </div>
                   <h1 className="text-2xl font-bold text-center">Create Account</h1>
-                  <p className="text-emerald-100 text-center mt-1 text-sm">Join SmartCare family today</p>
+                  <p className="text-blue-100 text-center mt-1 text-sm">Join SmartCare family today</p>
                 </div>
               </div>
 
@@ -224,7 +224,7 @@ export default function Signup() {
                   <Button
                     type="button"
                     variant="outline"
-                    className="w-full h-12 font-semibold flex items-center justify-center gap-3 border-2 border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/50 transition-all duration-300 rounded-xl"
+                    className="w-full h-12 font-semibold flex items-center justify-center gap-3 border-2 border-slate-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-300 rounded-xl"
                     onClick={handleGoogleSignUp}
                     disabled={googleLoading}
                     data-testid="button-google-signup"
@@ -278,22 +278,22 @@ export default function Signup() {
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                      <span className="h-1.5 w-1.5 bg-emerald-500 rounded-full" />
+                      <span className="h-1.5 w-1.5 bg-blue-600 rounded-full" />
                       Email or Phone
                     </label>
                     <div className="relative group">
-                      <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl opacity-0 group-focus-within:opacity-100 transition-opacity blur-sm -z-10" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-orange-500 rounded-xl opacity-0 group-focus-within:opacity-100 transition-opacity blur-sm -z-10" />
                       {identifier.includes("@") || !identifier ? (
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
                       ) : (
-                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
+                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
                       )}
                       <Input
                         type="text"
                         placeholder="Enter email or phone number"
                         value={identifier}
                         onChange={(e) => { setIdentifier(e.target.value); setOtpSent(false); }}
-                        className="pl-12 h-14 border-2 border-slate-200 focus:border-emerald-500 focus:ring-0 rounded-xl text-base bg-white/50 backdrop-blur-sm transition-all"
+                        className="pl-12 h-14 border-2 border-slate-200 focus:border-blue-600 focus:ring-0 rounded-xl text-base bg-white/50 backdrop-blur-sm transition-all"
                         required
                         data-testid="input-signup-identifier"
                       />
@@ -303,7 +303,7 @@ export default function Signup() {
                         type="button" 
                         variant="ghost" 
                         size="sm"
-                        className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 p-0 h-auto text-xs font-semibold" 
+                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 p-0 h-auto text-xs font-semibold" 
                         onClick={handleSendOTP}
                         disabled={loading}
                       >
@@ -312,7 +312,7 @@ export default function Signup() {
                       </Button>
                     )}
                     {otpSent && (
-                      <div className="flex items-center gap-1 text-xs text-emerald-600 font-medium">
+                      <div className="flex items-center gap-1 text-xs text-blue-600 font-medium">
                         <Shield className="h-3 w-3" />
                         Verification code sent!
                       </div>
@@ -321,18 +321,18 @@ export default function Signup() {
 
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                      <span className="h-1.5 w-1.5 bg-emerald-500 rounded-full" />
+                      <span className="h-1.5 w-1.5 bg-blue-600 rounded-full" />
                       Password
                     </label>
                     <div className="relative group">
-                      <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl opacity-0 group-focus-within:opacity-100 transition-opacity blur-sm -z-10" />
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-orange-500 rounded-xl opacity-0 group-focus-within:opacity-100 transition-opacity blur-sm -z-10" />
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
                       <Input
                         type="password"
                         placeholder="Create a strong password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="pl-12 h-14 border-2 border-slate-200 focus:border-emerald-500 focus:ring-0 rounded-xl text-base bg-white/50 backdrop-blur-sm transition-all"
+                        className="pl-12 h-14 border-2 border-slate-200 focus:border-blue-600 focus:ring-0 rounded-xl text-base bg-white/50 backdrop-blur-sm transition-all"
                         required
                         data-testid="input-signup-password"
                       />
@@ -341,18 +341,18 @@ export default function Signup() {
 
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                      <span className="h-1.5 w-1.5 bg-emerald-500 rounded-full" />
+                      <span className="h-1.5 w-1.5 bg-blue-600 rounded-full" />
                       Confirm Password
                     </label>
                     <div className="relative group">
-                      <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl opacity-0 group-focus-within:opacity-100 transition-opacity blur-sm -z-10" />
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-orange-500 rounded-xl opacity-0 group-focus-within:opacity-100 transition-opacity blur-sm -z-10" />
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
                       <Input
                         type="password"
                         placeholder="Confirm your password"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="pl-12 h-14 border-2 border-slate-200 focus:border-emerald-500 focus:ring-0 rounded-xl text-base bg-white/50 backdrop-blur-sm transition-all"
+                        className="pl-12 h-14 border-2 border-slate-200 focus:border-blue-600 focus:ring-0 rounded-xl text-base bg-white/50 backdrop-blur-sm transition-all"
                         required
                         data-testid="input-signup-confirm"
                       />
@@ -361,7 +361,7 @@ export default function Signup() {
 
                   <Button
                     type="submit"
-                    className="w-full h-14 text-lg font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 rounded-xl shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all duration-300"
+                    className="w-full h-14 text-lg font-bold bg-orange-500 hover:bg-orange-600 rounded-xl shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 transition-all duration-300 text-white border-0"
                     disabled={loading}
                     data-testid="button-signup"
                   >
@@ -379,7 +379,7 @@ export default function Signup() {
                 <div className="mt-8 pt-6 border-t border-slate-100">
                   <p className="text-center text-slate-600">
                     Already have an account?{" "}
-                    <Link href="/login" className="text-emerald-600 font-bold hover:text-emerald-700 hover:underline transition-colors">
+                    <Link href="/login" className="text-blue-600 font-bold hover:text-blue-700 hover:underline transition-colors">
                       Sign In
                     </Link>
                   </p>
