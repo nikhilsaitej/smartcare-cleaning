@@ -3,13 +3,39 @@ import { createServer, type Server } from "http";
 import { supabase } from "./supabase";
 import { sendContactConfirmationEmail, sendBookingConfirmationEmail, sendWelcomeEmail, sendPasswordResetEmail } from "./resend";
 import { sendBookingSMS, sendBookingWhatsApp, sendOTP } from "./twilio";
+import rateLimit from "express-rate-limit";
+import helmet from "helmet";
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  
-  app.post("/api/auth/send-otp", async (req, res) => {
+  // Security Hardening
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "https://*.supabase.co"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        imgSrc: ["'self'", "data:", "https://*.supabase.co", "https://images.unsplash.com"],
+        connectSrc: ["'self'", "https://*.supabase.co", "wss://*.supabase.co"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
+        objectSrc: ["'none'"],
+        mediaSrc: ["'self'"],
+        frameSrc: ["'self'"],
+      },
+    },
+  }));
+
+  const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 10, // Limit each IP to 10 requests per window
+    message: { error: "Too many requests, please try again later." },
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+
+  app.post("/api/auth/send-otp", authLimiter, async (req, res) => {
     try {
       const { phone } = req.body;
       if (!phone) return res.status(400).json({ error: "Phone number required" });
@@ -32,7 +58,7 @@ export async function registerRoutes(
     });
   });
 
-  app.post("/api/auth/signup-success", async (req, res) => {
+  app.post("/api/auth/signup-success", authLimiter, async (req, res) => {
     try {
       const { email } = req.body;
       if (email) {
@@ -44,7 +70,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/auth/password-reset", async (req, res) => {
+  app.post("/api/auth/password-reset", authLimiter, async (req, res) => {
     try {
       const { email, resetLink } = req.body;
       if (email && resetLink) {
@@ -264,12 +290,14 @@ export async function registerRoutes(
       }
       
       const token = authHeader.split(" ")[1];
+      // Supabase getUser verifies the JWT signature automatically
       const { data: { user }, error } = await supabase.auth.getUser(token);
       
       if (error || !user) {
-        return res.status(401).json({ error: "Unauthorized: Invalid token" });
+        return res.status(401).json({ error: "Unauthorized: Invalid session" });
       }
       
+      // Role-based access control (RBAC)
       if (user.email?.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
         return res.status(403).json({ error: "Forbidden: Admin access required" });
       }
