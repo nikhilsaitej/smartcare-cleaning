@@ -130,25 +130,25 @@ export default function Login() {
                     <span className="w-full border-t border-gray-200" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-white px-2 text-gray-500">Or continue with email or phone</span>
+                    <span className="bg-white px-2 text-gray-500 font-medium">Account Access</span>
                   </div>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold text-gray-700">Email or Phone Number</label>
+                    <label className="text-sm font-bold text-slate-700">Email or Phone</label>
                     <div className="relative">
                       {identifier.includes("@") || !identifier ? (
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                       ) : (
-                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                       )}
                       <Input
                         type="text"
-                        placeholder="you@example.com or +91..."
+                        placeholder="Enter email or phone number"
                         value={identifier}
                         onChange={(e) => setIdentifier(e.target.value)}
-                        className="pl-10"
+                        className="pl-10 h-12 border-slate-200 focus:border-primary focus:ring-primary"
                         required
                         data-testid="input-identifier"
                       />
