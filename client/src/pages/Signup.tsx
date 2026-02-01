@@ -206,16 +206,16 @@ export default function Signup() {
             className="w-full max-w-md"
           >
             <Card className="border-0 shadow-2xl shadow-blue-500/10 bg-white/80 backdrop-blur-xl overflow-hidden">
-              <div className="relative bg-gradient-to-r from-blue-600 to-blue-800 p-8 text-white overflow-hidden">
+              <div className="relative bg-gradient-to-r from-blue-600 to-blue-800 p-6 text-white overflow-hidden">
                 <div className="absolute inset-0 opacity-20" style={{
                   backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 20.5V18H0v-2h20v-2H0v-2h20v-2H0V8h20V6H0V4h20V2H0V0h22v20.5L20 22l2 1.5V44H0v-2h20v-2H0v-2h20v-2H0v-2h20v-2H0v-2h20v-2z' fill='%23fff' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E")`
                 }} />
-                <div className="relative">
-                  <div className="h-16 w-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-4 mx-auto">
-                    <UserPlus className="h-8 w-8 text-white" />
+                <div className="relative flex flex-col items-center">
+                  <div className="h-12 w-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mb-3">
+                    <UserPlus className="h-6 w-6 text-white" />
                   </div>
-                  <h1 className="text-2xl font-bold text-center">Create Account</h1>
-                  <p className="text-blue-100 text-center mt-1 text-sm">Join SmartCare family today</p>
+                  <h1 className="text-xl font-bold text-center">Create Account</h1>
+                  <p className="text-blue-100 text-center mt-0.5 text-xs">Join SmartCare family today</p>
                 </div>
               </div>
 
