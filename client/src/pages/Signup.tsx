@@ -51,11 +51,22 @@ export default function Signup() {
         variant: "destructive",
       });
     } else {
+      // Notify backend to send welcome email via Resend
+      try {
+        await fetch("/api/auth/signup-success", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+      } catch (e) {
+        console.error("Failed to trigger welcome email", e);
+      }
+
       toast({
         title: "Account Created!",
-        description: "Please check your email to verify your account.",
+        description: "Your account has been successfully created. Welcome to SmartCare!",
       });
-      setLocation("/login");
+      setLocation("/");
     }
     
     setLoading(false);

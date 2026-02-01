@@ -38,6 +38,42 @@ export async function getResendClient() {
   };
 }
 
+export async function sendWelcomeEmail(to: string) {
+  try {
+    const { client, fromEmail } = await getResendClient();
+    await client.emails.send({
+      from: fromEmail || 'SmartCare <noreply@smartcare.com>',
+      to: [to],
+      subject: 'Welcome to SmartCare Cleaning Solutions',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #1e40af, #3b82f6); padding: 30px; text-align: center;">
+            <h1 style="color: white; margin: 0;">Welcome to SmartCare</h1>
+          </div>
+          <div style="padding: 30px; background: #f8fafc;">
+            <h2 style="color: #1e40af;">Account Created Successfully!</h2>
+            <p style="color: #475569; font-size: 16px; line-height: 1.6;">
+              Thank you for joining SmartCare Cleaning Solutions. Your account has been created successfully.
+            </p>
+            <p style="color: #475569; font-size: 16px; line-height: 1.6;">
+              You can now browse our premium cleaning services and shop for housekeeping products directly from our website.
+            </p>
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+              <p style="color: #64748b; font-size: 14px;">
+                Best regards,<br>
+                <strong>SmartCare Cleaning Solutions Team</strong>
+              </p>
+            </div>
+          </div>
+        </div>
+      `
+    });
+    console.log('Welcome email sent to:', to);
+  } catch (error) {
+    console.error('Failed to send welcome email:', error);
+  }
+}
+
 export async function sendContactConfirmationEmail(to: string, name: string) {
   try {
     const { client, fromEmail } = await getResendClient();

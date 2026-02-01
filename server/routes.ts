@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { supabase } from "./supabase";
-import { sendContactConfirmationEmail, sendBookingConfirmationEmail } from "./resend";
+import { sendContactConfirmationEmail, sendBookingConfirmationEmail, sendWelcomeEmail } from "./resend";
 import { sendBookingSMS, sendBookingWhatsApp } from "./twilio";
 
 export async function registerRoutes(
@@ -14,6 +14,18 @@ export async function registerRoutes(
       supabaseUrl: process.env.SUPABASE_URL,
       supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
     });
+  });
+
+  app.post("/api/auth/signup-success", async (req, res) => {
+    try {
+      const { email } = req.body;
+      if (email) {
+        await sendWelcomeEmail(email);
+      }
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
   });
 
   app.get("/api/products", async (req, res) => {
