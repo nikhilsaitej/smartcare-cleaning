@@ -11,7 +11,7 @@ const serviceCategories = [
   { icon: Home, label: "Home Cleaning", href: "/services", color: "from-green-500 to-green-600" },
   { icon: Building2, label: "Office & Commercial", href: "/services", color: "from-purple-500 to-purple-600" },
   { icon: Sparkles, label: "Deep Cleaning", href: "/services", color: "from-cyan-500 to-cyan-600" },
-  { icon: null, label: "Maintenance & AMC", href: "/contact", color: "from-rose-500 to-pink-600", isAMC: true },
+  { icon: null, label: "Maintenance & AMC", href: "/contact", color: "from-blue-500 to-blue-600", isAMC: true },
 ];
 
 export default function Hero() {
@@ -105,7 +105,7 @@ export default function Hero() {
                       <motion.div
                         whileHover={{ scale: 1.03 }}
                         whileTap={{ scale: 0.98 }}
-                        className={`flex flex-col items-center p-3 rounded-xl cursor-pointer transition-all border hover:shadow-md group ${service.isAMC ? 'bg-rose-50 hover:bg-rose-100 border-rose-100 hover:border-rose-200' : 'bg-slate-50 hover:bg-slate-100 border-slate-100 hover:border-slate-200'}`}
+                        className={`flex flex-col items-center p-3 rounded-xl cursor-pointer transition-all border hover:shadow-md group ${service.isAMC ? 'bg-slate-50 hover:bg-slate-100 border-slate-100 hover:border-slate-200' : 'bg-slate-50 hover:bg-slate-100 border-slate-100 hover:border-slate-200'}`}
                       >
                         <div className={`h-11 w-11 bg-gradient-to-br ${service.color} rounded-xl flex items-center justify-center mb-2 shadow-sm group-hover:shadow-md transition-shadow`}>
                           {service.isAMC ? (
