@@ -71,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `https://website-aesthetic-builder.replit.app/auth/callback`,
         queryParams: {
           access_type: 'offline',
           prompt: 'consent',
