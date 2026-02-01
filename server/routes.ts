@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { supabase } from "./supabase";
-import { sendContactConfirmationEmail, sendBookingConfirmationEmail, sendWelcomeEmail } from "./resend";
+import { sendContactConfirmationEmail, sendBookingConfirmationEmail, sendWelcomeEmail, sendPasswordResetEmail } from "./resend";
 import { sendBookingSMS, sendBookingWhatsApp } from "./twilio";
 
 export async function registerRoutes(
@@ -21,6 +21,18 @@ export async function registerRoutes(
       const { email } = req.body;
       if (email) {
         await sendWelcomeEmail(email);
+      }
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/auth/password-reset", async (req, res) => {
+    try {
+      const { email, resetLink } = req.body;
+      if (email && resetLink) {
+        await sendPasswordResetEmail(email, resetLink);
       }
       res.json({ success: true });
     } catch (error: any) {

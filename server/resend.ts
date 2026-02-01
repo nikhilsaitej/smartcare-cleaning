@@ -74,6 +74,45 @@ export async function sendWelcomeEmail(to: string) {
   }
 }
 
+export async function sendPasswordResetEmail(to: string, resetLink: string) {
+  try {
+    const { client, fromEmail } = await getResendClient();
+    await client.emails.send({
+      from: fromEmail || 'SmartCare <noreply@smartcare.com>',
+      to: [to],
+      subject: 'Password Reset Request - SmartCare',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #1e40af, #3b82f6); padding: 30px; text-align: center;">
+            <h1 style="color: white; margin: 0;">SmartCare</h1>
+          </div>
+          <div style="padding: 30px; background: #f8fafc;">
+            <h2 style="color: #1e40af;">Password Reset</h2>
+            <p style="color: #475569; font-size: 16px; line-height: 1.6;">
+              You requested to reset your password. Click the button below to set a new one:
+            </p>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${resetLink}" style="background-color: #f97316; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Reset Password</a>
+            </div>
+            <p style="color: #475569; font-size: 14px;">
+              If the button doesn't work, copy and paste this link into your browser:
+            </p>
+            <p style="color: #3b82f6; font-size: 12px; word-break: break-all;">
+              ${resetLink}
+            </p>
+            <p style="color: #64748b; font-size: 14px; margin-top: 20px;">
+              If you didn't request this, you can safely ignore this email.
+            </p>
+          </div>
+        </div>
+      `
+    });
+    console.log('Password reset email sent to:', to);
+  } catch (error) {
+    console.error('Failed to send password reset email:', error);
+  }
+}
+
 export async function sendContactConfirmationEmail(to: string, name: string) {
   try {
     const { client, fromEmail } = await getResendClient();
