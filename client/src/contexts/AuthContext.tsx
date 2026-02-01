@@ -68,8 +68,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithGoogle = async () => {
     const supabase = await getSupabase();
-    // Redirecting directly back to the app, Supabase will handle the callback
-    const redirectUrl = `${window.location.origin}`;
+    // Use the hardcoded production URL to ensure consistency with Google Cloud Console settings
+    const redirectUrl = "https://website-aesthetic-builder.replit.app";
     console.log("Redirecting to Google with URL:", redirectUrl);
     
     const { error } = await supabase.auth.signInWithOAuth({
