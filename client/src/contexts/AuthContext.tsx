@@ -55,15 +55,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (identifier: string, password: string) => {
     const supabase = await getSupabase();
-    const { error } = await supabase.auth.signUp({ email, password });
+    const isEmail = identifier.includes("@");
+    const { error } = await supabase.auth.signUp(
+      isEmail ? { email: identifier, password } : { phone: identifier, password }
+    );
     return { error };
   };
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (identifier: string, password: string) => {
     const supabase = await getSupabase();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const isEmail = identifier.includes("@");
+    const { error } = await supabase.auth.signInWithPassword(
+      isEmail ? { email: identifier, password } : { phone: identifier, password }
+    );
     return { error };
   };
 
