@@ -4,10 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
-import { Mail, Lock, UserPlus, Loader2, Phone } from "lucide-react";
+import { Mail, Lock, UserPlus, Loader2, Phone, Sparkles, Shield, Star, Gift, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { motion } from "framer-motion";
 
 export default function Signup() {
   const [identifier, setIdentifier] = useState("");
@@ -70,7 +69,6 @@ export default function Signup() {
         variant: "destructive",
       });
     } else {
-      // Notify backend to send welcome email via Resend if it's an email signup
       if (identifier.includes("@")) {
         try {
           await fetch("/api/auth/signup-success", {
@@ -120,23 +118,113 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <Navbar />
-      <main className="pt-24 pb-20">
-        <div className="container mx-auto px-4">
-          <div className="max-w-md mx-auto">
-            <Card className="shadow-xl border-none">
-              <div className="bg-primary p-6 text-white text-center rounded-t-xl">
-                <UserPlus className="h-12 w-12 mx-auto mb-3" />
-                <h1 className="text-2xl font-bold">Create Account</h1>
-                <p className="text-blue-100 text-sm mt-1">Join SmartCare today</p>
+    <div className="min-h-screen relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50" />
+      <div className="absolute inset-0 opacity-30" style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2310b981' fill-opacity='0.15'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+      }} />
+      
+      <div className="absolute top-10 right-10 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-pulse" />
+      <div className="absolute bottom-10 left-10 w-96 h-96 bg-teal-200/30 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+      <div className="absolute top-1/3 right-1/3 w-64 h-64 bg-cyan-200/20 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '2s' }} />
+
+      <div className="relative min-h-screen flex">
+        <div className="hidden lg:flex lg:w-1/2 relative items-center justify-center p-12">
+          <motion.div 
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8 }}
+            className="max-w-lg"
+          >
+            <div className="mb-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="h-14 w-14 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                  <Sparkles className="h-7 w-7 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-slate-800">SmartCare</h1>
+                  <p className="text-sm text-emerald-600 font-medium">Cleaning Solutions</p>
+                </div>
               </div>
+              
+              <h2 className="text-4xl font-bold text-slate-800 leading-tight mb-4">
+                Start Your Journey to
+                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-600">
+                  Spotless Spaces
+                </span>
+              </h2>
+              <p className="text-slate-600 text-lg">
+                Join thousands of happy customers who trust SmartCare for all their cleaning needs.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mb-8">
+              {[
+                { icon: Star, title: "4.9 Rating", desc: "From 2000+ reviews" },
+                { icon: Gift, title: "Welcome Bonus", desc: "20% off first service" },
+                { icon: Zap, title: "Instant Booking", desc: "Same-day service" },
+                { icon: Shield, title: "100% Secure", desc: "Data protected" },
+              ].map((item, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 + i * 0.1 }}
+                  className="bg-white/60 backdrop-blur-sm p-4 rounded-2xl border border-white/80 shadow-lg hover:shadow-xl transition-shadow"
+                >
+                  <div className="h-10 w-10 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-xl flex items-center justify-center mb-3">
+                    <item.icon className="h-5 w-5 text-emerald-600" />
+                  </div>
+                  <p className="font-bold text-slate-800 text-sm">{item.title}</p>
+                  <p className="text-slate-500 text-xs">{item.desc}</p>
+                </motion.div>
+              ))}
+            </div>
+
+            <div className="p-6 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl shadow-xl text-white">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="h-12 w-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                  <Gift className="h-6 w-6" />
+                </div>
+                <div>
+                  <p className="font-bold text-lg">New Member Offer!</p>
+                  <p className="text-emerald-100 text-sm">Limited time only</p>
+                </div>
+              </div>
+              <p className="text-emerald-50 text-sm">
+                Sign up today and get <span className="font-bold text-white">20% OFF</span> on your first cleaning service. Plus, earn reward points with every booking!
+              </p>
+            </div>
+          </motion.div>
+        </div>
+
+        <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-12">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="w-full max-w-md"
+          >
+            <Card className="border-0 shadow-2xl shadow-emerald-500/10 bg-white/80 backdrop-blur-xl overflow-hidden">
+              <div className="relative bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 p-8 text-white overflow-hidden">
+                <div className="absolute inset-0 opacity-20" style={{
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 20.5V18H0v-2h20v-2H0v-2h20v-2H0V8h20V6H0V4h20V2H0V0h22v20.5L20 22l2 1.5V44H0v-2h20v-2H0v-2h20v-2H0v-2h20v-2H0v-2h20v-2z' fill='%23fff' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E")`
+                }} />
+                <div className="relative">
+                  <div className="h-16 w-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-4 mx-auto">
+                    <UserPlus className="h-8 w-8" />
+                  </div>
+                  <h1 className="text-2xl font-bold text-center">Create Account</h1>
+                  <p className="text-emerald-100 text-center mt-1 text-sm">Join SmartCare family today</p>
+                </div>
+              </div>
+
               <CardContent className="p-8">
                 <div className="space-y-3 mb-6">
                   <Button
                     type="button"
                     variant="outline"
-                    className="w-full h-12 font-semibold flex items-center justify-center gap-2"
+                    className="w-full h-12 font-semibold flex items-center justify-center gap-3 border-2 border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/50 transition-all duration-300 rounded-xl"
                     onClick={handleGoogleSignUp}
                     disabled={googleLoading}
                     data-testid="button-google-signup"
@@ -151,14 +239,14 @@ export default function Signup() {
                           <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                           <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                         </svg>
-                        Continue with Google
+                        <span className="text-slate-700">Continue with Google</span>
                       </>
                     )}
                   </Button>
                   <Button
                     type="button"
                     variant="outline"
-                    className="w-full h-12 font-semibold flex items-center justify-center gap-2 hover:bg-blue-50"
+                    className="w-full h-12 font-semibold flex items-center justify-center gap-3 border-2 border-slate-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-300 rounded-xl"
                     onClick={handleFacebookSignUp}
                     disabled={facebookLoading}
                     data-testid="button-facebook-signup"
@@ -170,36 +258,42 @@ export default function Signup() {
                         <svg className="h-5 w-5" viewBox="0 0 24 24" fill="#1877F2">
                           <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
                         </svg>
-                        Continue with Facebook
+                        <span className="text-slate-700">Continue with Facebook</span>
                       </>
                     )}
                   </Button>
                 </div>
 
-                <div className="relative mb-6">
+                <div className="relative my-6">
                   <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t border-gray-200" />
+                    <span className="w-full border-t-2 border-dashed border-slate-200" />
                   </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-white px-2 text-gray-500 font-medium">Account Details</span>
+                  <div className="relative flex justify-center">
+                    <span className="bg-white px-4 text-xs font-bold uppercase tracking-wider text-slate-400">
+                      or create with credentials
+                    </span>
                   </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-5">
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-slate-700">Email or Phone</label>
-                    <div className="relative">
+                    <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                      <span className="h-1.5 w-1.5 bg-emerald-500 rounded-full" />
+                      Email or Phone
+                    </label>
+                    <div className="relative group">
+                      <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl opacity-0 group-focus-within:opacity-100 transition-opacity blur-sm -z-10" />
                       {identifier.includes("@") || !identifier ? (
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
                       ) : (
-                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
                       )}
                       <Input
                         type="text"
                         placeholder="Enter email or phone number"
                         value={identifier}
                         onChange={(e) => { setIdentifier(e.target.value); setOtpSent(false); }}
-                        className="pl-10 h-12 border-slate-200 focus:border-primary focus:ring-primary"
+                        className="pl-12 h-14 border-2 border-slate-200 focus:border-emerald-500 focus:ring-0 rounded-xl text-base bg-white/50 backdrop-blur-sm transition-all"
                         required
                         data-testid="input-signup-identifier"
                       />
@@ -207,71 +301,103 @@ export default function Signup() {
                     {!identifier.includes("@") && identifier.length >= 10 && !otpSent && (
                       <Button 
                         type="button" 
-                        variant="link" 
-                        className="p-0 h-auto text-xs" 
+                        variant="ghost" 
+                        size="sm"
+                        className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 p-0 h-auto text-xs font-semibold" 
                         onClick={handleSendOTP}
                         disabled={loading}
                       >
-                        Verify phone with OTP
+                        <Zap className="h-3 w-3 mr-1" />
+                        Verify with OTP
                       </Button>
                     )}
-                    {otpSent && <span className="text-xs text-green-600">Verification code sent!</span>}
+                    {otpSent && (
+                      <div className="flex items-center gap-1 text-xs text-emerald-600 font-medium">
+                        <Shield className="h-3 w-3" />
+                        Verification code sent!
+                      </div>
+                    )}
                   </div>
+
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold text-gray-700">Password</label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                      <span className="h-1.5 w-1.5 bg-emerald-500 rounded-full" />
+                      Password
+                    </label>
+                    <div className="relative group">
+                      <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl opacity-0 group-focus-within:opacity-100 transition-opacity blur-sm -z-10" />
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
                       <Input
                         type="password"
-                        placeholder="Create a password"
+                        placeholder="Create a strong password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="pl-10"
+                        className="pl-12 h-14 border-2 border-slate-200 focus:border-emerald-500 focus:ring-0 rounded-xl text-base bg-white/50 backdrop-blur-sm transition-all"
                         required
                         data-testid="input-signup-password"
                       />
                     </div>
                   </div>
+
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold text-gray-700">Confirm Password</label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                      <span className="h-1.5 w-1.5 bg-emerald-500 rounded-full" />
+                      Confirm Password
+                    </label>
+                    <div className="relative group">
+                      <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl opacity-0 group-focus-within:opacity-100 transition-opacity blur-sm -z-10" />
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
                       <Input
                         type="password"
                         placeholder="Confirm your password"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="pl-10"
+                        className="pl-12 h-14 border-2 border-slate-200 focus:border-emerald-500 focus:ring-0 rounded-xl text-base bg-white/50 backdrop-blur-sm transition-all"
                         required
                         data-testid="input-signup-confirm"
                       />
                     </div>
                   </div>
+
                   <Button
                     type="submit"
-                    className="w-full bg-orange-500 hover:bg-orange-600 h-12 text-lg font-bold"
+                    className="w-full h-14 text-lg font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 rounded-xl shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all duration-300"
                     disabled={loading}
                     data-testid="button-signup"
                   >
                     {loading ? (
-                      <Loader2 className="h-5 w-5 animate-spin" />
+                      <Loader2 className="h-6 w-6 animate-spin" />
                     ) : (
-                      <>Create Account</>
+                      <span className="flex items-center gap-2">
+                        Create Account
+                        <Sparkles className="h-5 w-5" />
+                      </span>
                     )}
                   </Button>
                 </form>
-                <p className="text-center text-gray-600 mt-6">
-                  Already have an account?{" "}
-                  <Link href="/login" className="text-primary font-bold hover:underline">
-                    Sign In
-                  </Link>
-                </p>
+
+                <div className="mt-8 pt-6 border-t border-slate-100">
+                  <p className="text-center text-slate-600">
+                    Already have an account?{" "}
+                    <Link href="/login" className="text-emerald-600 font-bold hover:text-emerald-700 hover:underline transition-colors">
+                      Sign In
+                    </Link>
+                  </p>
+                </div>
+
+                <div className="mt-6 flex items-center justify-center gap-2 text-xs text-slate-400">
+                  <Shield className="h-4 w-4" />
+                  <span>Your data is safe with us</span>
+                </div>
               </CardContent>
             </Card>
-          </div>
+
+            <p className="text-center text-slate-500 text-sm mt-6">
+              © 2024 SmartCare Cleaning Solutions. All rights reserved.
+            </p>
+          </motion.div>
         </div>
-      </main>
-      <Footer />
+      </div>
     </div>
   );
 }
