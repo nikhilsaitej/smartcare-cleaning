@@ -237,8 +237,36 @@ export async function registerRoutes(
     }
   });
 
-  // Admin routes
-  app.get("/api/admin/contacts", async (req, res) => {
+  // Admin authentication middleware
+  const ADMIN_EMAIL = "smartcarecleaningsolutions@gmail.com";
+  
+  const verifyAdmin = async (req: any, res: any, next: any) => {
+    try {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({ error: "Unauthorized: No token provided" });
+      }
+      
+      const token = authHeader.split(" ")[1];
+      const { data: { user }, error } = await supabase.auth.getUser(token);
+      
+      if (error || !user) {
+        return res.status(401).json({ error: "Unauthorized: Invalid token" });
+      }
+      
+      if (user.email?.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+        return res.status(403).json({ error: "Forbidden: Admin access required" });
+      }
+      
+      req.user = user;
+      next();
+    } catch (error) {
+      return res.status(500).json({ error: "Authentication failed" });
+    }
+  };
+
+  // Admin routes (protected)
+  app.get("/api/admin/contacts", verifyAdmin, async (req, res) => {
     try {
       const { data, error } = await supabase
         .from("contacts")
@@ -255,7 +283,21 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/admin/bookings", async (req, res) => {
+  app.delete("/api/admin/contacts/:id", verifyAdmin, async (req, res) => {
+    try {
+      const { error } = await supabase
+        .from("contacts")
+        .delete()
+        .eq("id", req.params.id);
+      
+      if (error) throw error;
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/admin/bookings", verifyAdmin, async (req, res) => {
     try {
       const { data, error } = await supabase
         .from("bookings")
@@ -269,6 +311,183 @@ export async function registerRoutes(
       res.json(data || []);
     } catch (error: any) {
       res.json([]);
+    }
+  });
+
+  app.patch("/api/admin/bookings/:id", verifyAdmin, async (req, res) => {
+    try {
+      const { data, error } = await supabase
+        .from("bookings")
+        .update(req.body)
+        .eq("id", req.params.id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      res.json(data);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.delete("/api/admin/bookings/:id", verifyAdmin, async (req, res) => {
+    try {
+      const { error } = await supabase
+        .from("bookings")
+        .delete()
+        .eq("id", req.params.id);
+      
+      if (error) throw error;
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/admin/products", verifyAdmin, async (req, res) => {
+    try {
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .order("created_at", { ascending: false });
+      
+      if (error) {
+        return res.json([]);
+      }
+      res.json(data || []);
+    } catch (error: any) {
+      res.json([]);
+    }
+  });
+
+  app.post("/api/admin/products", verifyAdmin, async (req, res) => {
+    try {
+      const { data, error } = await supabase
+        .from("products")
+        .insert([req.body])
+        .select()
+        .single();
+      
+      if (error) throw error;
+      res.json(data);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.patch("/api/admin/products/:id", verifyAdmin, async (req, res) => {
+    try {
+      const { data, error } = await supabase
+        .from("products")
+        .update(req.body)
+        .eq("id", req.params.id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      res.json(data);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.delete("/api/admin/products/:id", verifyAdmin, async (req, res) => {
+    try {
+      const { error } = await supabase
+        .from("products")
+        .delete()
+        .eq("id", req.params.id);
+      
+      if (error) throw error;
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/admin/services", verifyAdmin, async (req, res) => {
+    try {
+      const { data, error } = await supabase
+        .from("services")
+        .select("*")
+        .order("created_at", { ascending: false });
+      
+      if (error) {
+        return res.json([]);
+      }
+      res.json(data || []);
+    } catch (error: any) {
+      res.json([]);
+    }
+  });
+
+  app.post("/api/admin/services", verifyAdmin, async (req, res) => {
+    try {
+      const { data, error } = await supabase
+        .from("services")
+        .insert([req.body])
+        .select()
+        .single();
+      
+      if (error) throw error;
+      res.json(data);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.patch("/api/admin/services/:id", verifyAdmin, async (req, res) => {
+    try {
+      const { data, error } = await supabase
+        .from("services")
+        .update(req.body)
+        .eq("id", req.params.id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      res.json(data);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.delete("/api/admin/services/:id", verifyAdmin, async (req, res) => {
+    try {
+      const { error } = await supabase
+        .from("services")
+        .delete()
+        .eq("id", req.params.id);
+      
+      if (error) throw error;
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/admin/stats", verifyAdmin, async (req, res) => {
+    try {
+      const [contactsRes, bookingsRes, productsRes, servicesRes] = await Promise.all([
+        supabase.from("contacts").select("*", { count: "exact", head: true }),
+        supabase.from("bookings").select("*", { count: "exact", head: true }),
+        supabase.from("products").select("*", { count: "exact", head: true }),
+        supabase.from("services").select("*", { count: "exact", head: true }),
+      ]);
+
+      res.json({
+        contacts: contactsRes.count || 0,
+        bookings: bookingsRes.count || 0,
+        products: productsRes.count || 0,
+        services: servicesRes.count || 0,
+        integrations: {
+          supabase: { status: "connected", url: process.env.SUPABASE_URL },
+          resend: { status: "connected" },
+          twilio: { status: "connected" },
+        }
+      });
+    } catch (error: any) {
+      res.json({ contacts: 0, bookings: 0, products: 0, services: 0, integrations: {} });
     }
   });
 
