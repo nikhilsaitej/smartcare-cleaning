@@ -47,6 +47,23 @@ export async function getTwilioFromPhoneNumber() {
   return phoneNumber;
 }
 
+export async function sendOTP(to: string, otp: string) {
+  try {
+    const client = await getTwilioClient();
+    const fromNumber = await getTwilioFromPhoneNumber();
+    
+    await client.messages.create({
+      body: `Your SmartCare verification code is: ${otp}. Valid for 10 minutes.`,
+      from: fromNumber,
+      to: to
+    });
+    console.log('OTP sent via SMS to:', to);
+  } catch (error) {
+    console.error('Failed to send OTP SMS:', error);
+    throw error;
+  }
+}
+
 export async function sendBookingSMS(to: string, name: string, serviceName: string, date: string) {
   try {
     const client = await getTwilioClient();

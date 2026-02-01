@@ -16,9 +16,27 @@ export default function Signup() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [facebookLoading, setFacebookLoading] = useState(false);
-  const { signUp, signInWithGoogle, signInWithFacebook } = useAuth();
+  const [otpSent, setOtpSent] = useState(false);
+  const { signUp, signInWithGoogle, signInWithFacebook, sendOTP } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+
+  const handleSendOTP = async () => {
+    const isPhone = !identifier.includes("@") && identifier.length >= 10;
+    if (!isPhone) {
+      toast({ title: "Invalid Phone", description: "Please enter a valid phone number.", variant: "destructive" });
+      return;
+    }
+    setLoading(true);
+    const { error } = await sendOTP(identifier);
+    setLoading(false);
+    if (error) {
+      toast({ title: "OTP Failed", description: error.message, variant: "destructive" });
+    } else {
+      setOtpSent(true);
+      toast({ title: "OTP Sent", description: "Verification code sent to your phone." });
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -180,12 +198,24 @@ export default function Signup() {
                         type="text"
                         placeholder="you@example.com or +91..."
                         value={identifier}
-                        onChange={(e) => setIdentifier(e.target.value)}
+                        onChange={(e) => { setIdentifier(e.target.value); setOtpSent(false); }}
                         className="pl-10"
                         required
                         data-testid="input-signup-identifier"
                       />
                     </div>
+                    {!identifier.includes("@") && identifier.length >= 10 && !otpSent && (
+                      <Button 
+                        type="button" 
+                        variant="link" 
+                        className="p-0 h-auto text-xs" 
+                        onClick={handleSendOTP}
+                        disabled={loading}
+                      >
+                        Verify phone with OTP
+                      </Button>
+                    )}
+                    {otpSent && <span className="text-xs text-green-600">Verification code sent!</span>}
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-gray-700">Password</label>

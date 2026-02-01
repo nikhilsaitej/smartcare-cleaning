@@ -10,6 +10,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signInWithGoogle: () => Promise<{ error: any }>;
   signInWithFacebook: () => Promise<{ error: any }>;
+  sendOTP: (phone: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: any }>;
 }
@@ -103,6 +104,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error };
   };
 
+  const sendOTP = async (phone: string) => {
+    try {
+      const res = await fetch("/api/auth/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      return { error: null };
+    } catch (error: any) {
+      return { error };
+    }
+  };
+
   const signOut = async () => {
     const supabase = await getSupabase();
     await supabase.auth.signOut();
@@ -117,7 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signUp, signIn, signInWithGoogle, signInWithFacebook, signOut, resetPassword }}>
+    <AuthContext.Provider value={{ user, session, loading, signUp, signIn, signInWithGoogle, signInWithFacebook, sendOTP, signOut, resetPassword }}>
       {children}
     </AuthContext.Provider>
   );
