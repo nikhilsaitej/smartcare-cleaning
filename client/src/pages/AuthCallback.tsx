@@ -43,8 +43,10 @@ export default function AuthCallback() {
         }
         
         // Redirect to home page after successful auth
+        console.log("Auth success, redirecting to home");
         setLocation("/");
       } catch (err: any) {
+        console.error("Auth callback error:", err);
         setError(err.message || "Authentication failed");
       }
     };
