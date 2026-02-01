@@ -96,6 +96,12 @@ export default function Navbar() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  <Link href="/dashboard">
+                    <DropdownMenuItem className="cursor-pointer" data-testid="link-dashboard">
+                      <User className="h-4 w-4 mr-2" />
+                      My Dashboard
+                    </DropdownMenuItem>
+                  </Link>
                   {isAdmin && (
                     <Link href="/admin">
                       <DropdownMenuItem className="cursor-pointer" data-testid="link-admin">
@@ -153,6 +159,12 @@ export default function Navbar() {
                           <User className="h-4 w-4" />
                           <span>{user.email}</span>
                         </div>
+                        <Link href="/dashboard">
+                          <Button variant="outline" className="w-full gap-2">
+                            <User className="h-4 w-4" />
+                            My Dashboard
+                          </Button>
+                        </Link>
                         {isAdmin && (
                           <Link href="/admin">
                             <Button variant="outline" className="w-full gap-2">
