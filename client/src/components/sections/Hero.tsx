@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle, Home, Building2, Sparkles, Package, Boxes, Star, Users } from "lucide-react";
+import { CheckCircle, Home, Building2, Sparkles, Package, Boxes, Star, Users, Clock, Wrench } from "lucide-react";
 import { Link } from "wouter";
 import heroBg from "@/assets/hero-bg.png";
 
@@ -10,7 +10,8 @@ const serviceCategories = [
   { icon: Boxes, label: "Bulk Orders & Wholesale", href: "/contact", color: "from-orange-500 to-orange-600" },
   { icon: Home, label: "Home Cleaning", href: "/services", color: "from-green-500 to-green-600" },
   { icon: Building2, label: "Office & Commercial", href: "/services", color: "from-purple-500 to-purple-600" },
-  { icon: Sparkles, label: "Deep Cleaning Services", href: "/services", color: "from-cyan-500 to-cyan-600" },
+  { icon: Sparkles, label: "Deep Cleaning", href: "/services", color: "from-cyan-500 to-cyan-600" },
+  { icon: null, label: "Maintenance & AMC", href: "/contact", color: "from-rose-500 to-pink-600", isAMC: true },
 ];
 
 export default function Hero() {
@@ -98,38 +99,30 @@ export default function Hero() {
                   What are you looking for?
                 </h3>
                 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-3">
                   {serviceCategories.map((service, index) => (
                     <Link key={index} href={service.href}>
                       <motion.div
                         whileHover={{ scale: 1.03 }}
                         whileTap={{ scale: 0.98 }}
-                        className="flex flex-col items-center p-4 bg-slate-50 hover:bg-slate-100 rounded-xl cursor-pointer transition-all border border-slate-100 hover:border-slate-200 hover:shadow-md group"
+                        className={`flex flex-col items-center p-3 rounded-xl cursor-pointer transition-all border hover:shadow-md group ${service.isAMC ? 'bg-rose-50 hover:bg-rose-100 border-rose-100 hover:border-rose-200' : 'bg-slate-50 hover:bg-slate-100 border-slate-100 hover:border-slate-200'}`}
                       >
-                        <div className={`h-12 w-12 bg-gradient-to-br ${service.color} rounded-xl flex items-center justify-center mb-2 shadow-sm group-hover:shadow-md transition-shadow`}>
-                          <service.icon className="h-6 w-6 text-white" />
+                        <div className={`h-11 w-11 bg-gradient-to-br ${service.color} rounded-xl flex items-center justify-center mb-2 shadow-sm group-hover:shadow-md transition-shadow`}>
+                          {service.isAMC ? (
+                            <div className="flex items-center gap-0.5">
+                              <Clock className="h-4 w-4 text-white" />
+                              <Wrench className="h-4 w-4 text-white" />
+                            </div>
+                          ) : (
+                            service.icon && <service.icon className="h-5 w-5 text-white" />
+                          )}
                         </div>
-                        <span className="text-xs font-semibold text-slate-700 text-center leading-tight">
+                        <span className="text-[10px] font-semibold text-slate-700 text-center leading-tight">
                           {service.label}
                         </span>
                       </motion.div>
                     </Link>
                   ))}
-                  
-                  <Link href="/contact">
-                    <motion.div
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="flex flex-col items-center p-4 bg-orange-50 hover:bg-orange-100 rounded-xl cursor-pointer transition-all border border-orange-100 hover:border-orange-200 hover:shadow-md group"
-                    >
-                      <div className="h-12 w-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center mb-2 shadow-sm group-hover:shadow-md transition-shadow">
-                        <span className="text-white font-bold text-lg">?</span>
-                      </div>
-                      <span className="text-xs font-semibold text-slate-700 text-center leading-tight">
-                        Custom Request
-                      </span>
-                    </motion.div>
-                  </Link>
                 </div>
 
                 {/* Stats Section */}
