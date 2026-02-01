@@ -68,8 +68,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithGoogle = async () => {
     const supabase = await getSupabase();
-    // Use the exact origin-based URL to avoid any mismatch
-    const redirectUrl = `${window.location.origin}/auth/callback`;
+    // Redirecting directly back to the app, Supabase will handle the callback
+    const redirectUrl = `${window.location.origin}`;
     console.log("Redirecting to Google with URL:", redirectUrl);
     
     const { error } = await supabase.auth.signInWithOAuth({
