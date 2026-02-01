@@ -31,14 +31,13 @@ export default function LoadingScreen() {
 
         <div className="w-72 h-1 bg-slate-100 rounded-full overflow-hidden">
           <motion.div
-            initial={{ x: "-100%" }}
-            animate={{ x: "100%" }}
+            initial={{ width: "0%" }}
+            animate={{ width: "100%" }}
             transition={{
-              repeat: Infinity,
-              duration: 1.2,
+              duration: 1.8,
               ease: "easeInOut",
             }}
-            className="h-full w-1/3 bg-gradient-to-r from-blue-500 via-blue-600 to-blue-500 rounded-full"
+            className="h-full bg-gradient-to-r from-blue-500 via-blue-600 to-blue-500 rounded-full"
           />
         </div>
       </motion.div>
