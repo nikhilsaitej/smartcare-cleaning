@@ -9,6 +9,7 @@ interface AuthContextType {
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signInWithGoogle: () => Promise<{ error: any }>;
+  signInWithFacebook: () => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: any }>;
 }
@@ -68,9 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithGoogle = async () => {
     const supabase = await getSupabase();
-    // Use the hardcoded production URL to ensure consistency with Google Cloud Console settings
     const redirectUrl = "https://website-aesthetic-builder.replit.app";
-    console.log("Redirecting to Google with URL:", redirectUrl);
     
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -80,6 +79,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           access_type: 'offline',
           prompt: 'consent',
         },
+      }
+    });
+    return { error };
+  };
+
+  const signInWithFacebook = async () => {
+    const supabase = await getSupabase();
+    const redirectUrl = "https://website-aesthetic-builder.replit.app";
+    
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'facebook',
+      options: {
+        redirectTo: redirectUrl,
       }
     });
     return { error };
@@ -99,7 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signUp, signIn, signInWithGoogle, signOut, resetPassword }}>
+    <AuthContext.Provider value={{ user, session, loading, signUp, signIn, signInWithGoogle, signInWithFacebook, signOut, resetPassword }}>
       {children}
     </AuthContext.Provider>
   );
