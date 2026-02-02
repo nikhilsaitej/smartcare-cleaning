@@ -15,8 +15,9 @@ import { useToast } from "@/hooks/use-toast";
 import { 
   Mail, Calendar, User, Phone, MapPin, Clock, MessageSquare, Package, Loader2, 
   Plus, Pencil, Trash2, RefreshCw, Database, Send, MessageCircle, CheckCircle,
-  ShoppingBag, Wrench, BarChart3, Settings, ExternalLink
+  ShoppingBag, Wrench, BarChart3, Settings, ExternalLink, ImageIcon
 } from "lucide-react";
+import ImageUpload from "@/components/ui/ImageUpload";
 
 interface Contact {
   id: string;
@@ -65,10 +66,13 @@ interface Stats {
   bookings: number;
   products: number;
   services: number;
+  orders: number;
   integrations: {
     supabase?: { status: string; url?: string };
     resend?: { status: string };
     twilio?: { status: string };
+    razorpay?: { status: string };
+    cloudinary?: { status: string };
   };
 }
 
@@ -400,7 +404,18 @@ export default function Admin() {
                     <MessageCircle className="h-8 w-8 text-blue-600" />
                     <div>
                       <p className="font-semibold">Twilio (SMS/WhatsApp)</p>
-                      <Badge className="bg-green-100 text-green-700 hover:bg-green-100">Connected</Badge>
+                      <Badge className={stats?.integrations?.twilio?.status === 'connected' ? "bg-green-100 text-green-700 hover:bg-green-100" : "bg-red-100 text-red-700 hover:bg-red-100"}>
+                        {stats?.integrations?.twilio?.status === 'connected' ? 'Connected' : 'Not Configured'}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
+                    <ImageIcon className="h-8 w-8 text-orange-600" />
+                    <div>
+                      <p className="font-semibold">Cloudinary (Storage)</p>
+                      <Badge className={stats?.integrations?.cloudinary?.status === 'connected' ? "bg-green-100 text-green-700 hover:bg-green-100" : "bg-red-100 text-red-700 hover:bg-red-100"}>
+                        {stats?.integrations?.cloudinary?.status === 'connected' ? 'Connected' : 'Not Configured'}
+                      </Badge>
                     </div>
                   </div>
                 </div>
@@ -523,10 +538,23 @@ export default function Admin() {
                       <form onSubmit={handleSaveProduct} className="space-y-4">
                         <Input name="name" placeholder="Product Name" defaultValue={editingProduct?.name} required />
                         <Textarea name="description" placeholder="Description" defaultValue={editingProduct?.description} />
-                        <Input name="price" type="number" step="0.01" placeholder="Price" defaultValue={editingProduct?.price} required />
-                        <Input name="image_url" placeholder="Image URL" defaultValue={editingProduct?.image_url} />
-                        <Input name="category" placeholder="Category" defaultValue={editingProduct?.category} />
-                        <Button type="submit" className="w-full">Save Product</Button>
+                        <div className="grid grid-cols-2 gap-4">
+                          <Input name="price" type="number" step="0.01" placeholder="Price" defaultValue={editingProduct?.price} required />
+                          <Input name="category" placeholder="Category" defaultValue={editingProduct?.category} />
+                        </div>
+                        <ImageUpload 
+                          label="Product Image" 
+                          folder="products"
+                          defaultImage={editingProduct?.image_url}
+                          onUploadSuccess={(url) => {
+                            const input = document.getElementById('product-image-url') as HTMLInputElement;
+                            if (input) input.value = url;
+                          }}
+                        />
+                        <input type="hidden" id="product-image-url" name="image_url" defaultValue={editingProduct?.image_url} />
+                        <Button type="submit" className="w-full">
+                          {editingProduct ? "Update Product" : "Create Product"}
+                        </Button>
                       </form>
                     </DialogContent>
                   </Dialog>
@@ -579,10 +607,23 @@ export default function Admin() {
                       <form onSubmit={handleSaveService} className="space-y-4">
                         <Input name="name" placeholder="Service Name" defaultValue={editingService?.name} required />
                         <Textarea name="description" placeholder="Description" defaultValue={editingService?.description} />
-                        <Input name="price" type="number" step="0.01" placeholder="Price" defaultValue={editingService?.price} required />
-                        <Input name="image_url" placeholder="Image URL" defaultValue={editingService?.image_url} />
-                        <Input name="duration" placeholder="Duration (e.g., 2-3 hours)" defaultValue={editingService?.duration} />
-                        <Button type="submit" className="w-full">Save Service</Button>
+                        <div className="grid grid-cols-2 gap-4">
+                          <Input name="price" type="number" step="0.01" placeholder="Price" defaultValue={editingService?.price} required />
+                          <Input name="duration" placeholder="Duration (e.g., 2-3 hours)" defaultValue={editingService?.duration} />
+                        </div>
+                        <ImageUpload 
+                          label="Service Image" 
+                          folder="services"
+                          defaultImage={editingService?.image_url}
+                          onUploadSuccess={(url) => {
+                            const input = document.getElementById('service-image-url') as HTMLInputElement;
+                            if (input) input.value = url;
+                          }}
+                        />
+                        <input type="hidden" id="service-image-url" name="image_url" defaultValue={editingService?.image_url} />
+                        <Button type="submit" className="w-full">
+                          {editingService ? "Update Service" : "Create Service"}
+                        </Button>
                       </form>
                     </DialogContent>
                   </Dialog>
