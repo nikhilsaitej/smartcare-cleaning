@@ -21,6 +21,7 @@ import {
   handleWebhookEvent,
   getRazorpayKeyId 
 } from "./razorpay";
+import { getCloudinarySignature } from "./cloudinary";
 import { schemas, validate, validateParams, validateQuery } from "./security/validation";
 import { asyncHandler } from "./security/errorHandler";
 import { auditLog } from "./security/auditLogger";
@@ -581,9 +582,20 @@ export async function registerRoutes(
         resend: { status: "connected" },
         twilio: { status: "connected" },
         razorpay: { status: getRazorpayKeyId() ? "connected" : "not_configured" },
+        cloudinary: { status: process.env.CLOUDINARY_CLOUD_NAME ? "connected" : "not_configured" },
       }
     });
   }));
+
+  app.get("/api/upload/signature", verifyAdmin, (req: Request, res: Response) => {
+    try {
+      const folder = req.query.folder as string || 'smartcare';
+      const signatureData = getCloudinarySignature(folder);
+      res.json(signatureData);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to generate upload signature" });
+    }
+  });
 
   return httpServer;
 }
