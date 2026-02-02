@@ -1,539 +1,479 @@
-import type { Express } from "express";
-import { createServer, type Server } from "http";
+import type { Express, Request, Response } from "express";
+import { type Server } from "http";
 import { supabase } from "./supabase";
 import { sendContactConfirmationEmail, sendBookingConfirmationEmail, sendWelcomeEmail, sendPasswordResetEmail } from "./resend";
 import { sendBookingSMS, sendBookingWhatsApp, sendOTP } from "./twilio";
-import rateLimit from "express-rate-limit";
-import helmet from "helmet";
+import { 
+  verifyAdmin, 
+  verifyToken, 
+  verifyUserOwnership,
+  authLimiter, 
+  apiLimiter, 
+  otpLimiter,
+  strictLimiter
+} from "./security/middleware";
+import { schemas, validate, validateParams, validateQuery } from "./security/validation";
+import { asyncHandler } from "./security/errorHandler";
+import { auditLog } from "./security/auditLogger";
+
+const otpStore = new Map<string, { otp: string; expires: number; attempts: number }>();
+
+const cleanExpiredOTPs = () => {
+  const now = Date.now();
+  const entries = Array.from(otpStore.entries());
+  for (let i = 0; i < entries.length; i++) {
+    const [key, value] = entries[i];
+    if (value.expires < now) {
+      otpStore.delete(key);
+    }
+  }
+};
+
+setInterval(cleanExpiredOTPs, 5 * 60 * 1000);
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  // Security Hardening
-  app.use(helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "https://*.supabase.co"],
-        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-        imgSrc: ["'self'", "data:", "https://*.supabase.co", "https://images.unsplash.com"],
-        connectSrc: ["'self'", "https://*.supabase.co", "wss://*.supabase.co"],
-        fontSrc: ["'self'", "https://fonts.gstatic.com"],
-        objectSrc: ["'none'"],
-        mediaSrc: ["'self'"],
-        frameSrc: ["'self'"],
-      },
-    },
+  
+  app.post("/api/auth/send-otp", otpLimiter, validate(schemas.sendOtp), asyncHandler(async (req: Request, res: Response) => {
+    const { phone } = req.body;
+    
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expires = Date.now() + 10 * 60 * 1000;
+    
+    otpStore.set(phone, { otp, expires, attempts: 0 });
+    
+    await sendOTP(phone, otp);
+    
+    auditLog("AUTH_SUCCESS", { action: "OTP_SENT", phone: phone.slice(-4) });
+    res.json({ success: true, message: "OTP sent successfully" });
   }));
 
-  const authLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 10, // Limit each IP to 10 requests per window
-    message: { error: "Too many requests, please try again later." },
-    standardHeaders: true,
-    legacyHeaders: false,
-  });
-
-  app.post("/api/auth/send-otp", authLimiter, async (req, res) => {
-    try {
-      const { phone } = req.body;
-      if (!phone) return res.status(400).json({ error: "Phone number required" });
-      
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
-      await sendOTP(phone, otp);
-      
-      // Store OTP in Supabase or temporary memory
-      // For now we'll just return success as we're focusing on Twilio integration
-      res.json({ success: true, message: "OTP sent successfully" });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
+  app.post("/api/auth/verify-otp", authLimiter, asyncHandler(async (req: Request, res: Response) => {
+    const { phone, otp } = req.body;
+    
+    if (!phone || !otp) {
+      return res.status(400).json({ error: "Phone and OTP are required" });
     }
-  });
+    
+    const stored = otpStore.get(phone);
+    
+    if (!stored) {
+      return res.status(400).json({ error: "No OTP found. Please request a new one." });
+    }
+    
+    if (stored.expires < Date.now()) {
+      otpStore.delete(phone);
+      return res.status(400).json({ error: "OTP expired. Please request a new one." });
+    }
+    
+    stored.attempts++;
+    if (stored.attempts > 3) {
+      otpStore.delete(phone);
+      auditLog("AUTH_FAILURE", { reason: "OTP_MAX_ATTEMPTS", phone: phone.slice(-4) });
+      return res.status(400).json({ error: "Too many attempts. Please request a new OTP." });
+    }
+    
+    if (stored.otp !== otp) {
+      return res.status(400).json({ error: "Invalid OTP" });
+    }
+    
+    otpStore.delete(phone);
+    auditLog("AUTH_SUCCESS", { action: "OTP_VERIFIED", phone: phone.slice(-4) });
+    res.json({ success: true, verified: true });
+  }));
 
-  app.get("/api/config", (req, res) => {
+  app.get("/api/config", apiLimiter, (req: Request, res: Response) => {
     res.json({
       supabaseUrl: process.env.SUPABASE_URL,
       supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
     });
   });
 
-  app.post("/api/auth/signup-success", authLimiter, async (req, res) => {
-    try {
-      const { email } = req.body;
-      if (email) {
-        await sendWelcomeEmail(email);
-      }
-      res.json({ success: true });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
+  app.post("/api/auth/signup-success", authLimiter, validate(schemas.signupSuccess), asyncHandler(async (req: Request, res: Response) => {
+    const { email } = req.body;
+    await sendWelcomeEmail(email);
+    auditLog("AUTH_SUCCESS", { action: "SIGNUP", email: email.split("@")[0] + "@***" });
+    res.json({ success: true });
+  }));
 
-  app.post("/api/auth/password-reset", authLimiter, async (req, res) => {
-    try {
-      const { email, resetLink } = req.body;
-      if (email && resetLink) {
-        await sendPasswordResetEmail(email, resetLink);
-      }
-      res.json({ success: true });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
+  app.post("/api/auth/password-reset", authLimiter, validate(schemas.passwordReset), asyncHandler(async (req: Request, res: Response) => {
+    const { email, resetLink } = req.body;
+    await sendPasswordResetEmail(email, resetLink);
+    res.json({ success: true });
+  }));
 
-  app.get("/api/products", async (req, res) => {
-    try {
-      const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .order("created_at", { ascending: false });
-      
-      if (error) throw error;
-      res.json(data || []);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
+  app.get("/api/products", apiLimiter, asyncHandler(async (req: Request, res: Response) => {
+    const { data, error } = await supabase
+      .from("products")
+      .select("*")
+      .order("created_at", { ascending: false });
+    
+    if (error) throw error;
+    res.json(data || []);
+  }));
 
-  app.get("/api/services", async (req, res) => {
-    try {
-      const { data, error } = await supabase
-        .from("services")
-        .select("*")
-        .order("created_at", { ascending: false });
-      
-      if (error) throw error;
-      res.json(data || []);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
+  app.get("/api/services", apiLimiter, asyncHandler(async (req: Request, res: Response) => {
+    const { data, error } = await supabase
+      .from("services")
+      .select("*")
+      .order("created_at", { ascending: false });
+    
+    if (error) throw error;
+    res.json(data || []);
+  }));
 
-  app.post("/api/bookings", async (req, res) => {
-    try {
-      const { name, phone, email, service_name, date, time_slot, address } = req.body;
-      
-      const { data, error } = await supabase
-        .from("bookings")
-        .insert([req.body])
-        .select()
-        .single();
-      
-      if (error) throw error;
-      
-      // Send notifications (non-blocking)
-      if (email) {
-        sendBookingConfirmationEmail(email, name, service_name || 'Cleaning Service', date || 'To be confirmed').catch(console.error);
-      }
-      if (phone) {
-        sendBookingSMS(phone, name, service_name || 'Cleaning Service', date || 'To be confirmed').catch(console.error);
-        sendBookingWhatsApp(phone, name, service_name || 'Cleaning Service', date || 'To be confirmed').catch(console.error);
-      }
-      
-      res.json(data);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
+  app.post("/api/bookings", strictLimiter, validate(schemas.booking), asyncHandler(async (req: Request, res: Response) => {
+    const { name, phone, email, service_name, date, time_slot, address, user_id } = req.body;
+    
+    const { data, error } = await supabase
+      .from("bookings")
+      .insert([{ name, phone, email, service_name, date, time_slot, address, user_id }])
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    auditLog("BOOKING_CREATED", { bookingId: data.id, service: service_name });
+    
+    if (email) {
+      sendBookingConfirmationEmail(email, name, service_name || 'Cleaning Service', date || 'To be confirmed').catch(console.error);
     }
-  });
-
-  app.get("/api/bookings", async (req, res) => {
-    try {
-      const userId = req.query.user_id as string;
-      let query = supabase.from("bookings").select("*").order("created_at", { ascending: false });
-      
-      if (userId) {
-        query = query.eq("user_id", userId);
-      }
-      
-      const { data, error } = await query;
-      if (error) throw error;
-      res.json(data || []);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
+    if (phone) {
+      sendBookingSMS(phone, name, service_name || 'Cleaning Service', date || 'To be confirmed').catch(console.error);
+      sendBookingWhatsApp(phone, name, service_name || 'Cleaning Service', date || 'To be confirmed').catch(console.error);
     }
-  });
+    
+    res.json(data);
+  }));
 
-  app.post("/api/contacts", async (req, res) => {
-    try {
-      const { name, email, message } = req.body;
-      
-      // Validate required fields
-      if (!name || !email || !message) {
-        return res.status(400).json({ error: "Name, email, and message are required" });
-      }
-      
-      // Try to save to Supabase
-      let savedToDb = false;
-      try {
-        const { data, error } = await supabase
-          .from("contacts")
-          .insert([{ name, email, message }])
-          .select()
-          .single();
-        
-        if (!error) {
-          savedToDb = true;
-        }
-      } catch (dbError) {
-        console.log("Database save skipped (table may not exist):", dbError);
-      }
-      
-      // Send email notification (non-blocking)
-      sendContactConfirmationEmail(email, name).catch(console.error);
-      
-      // Return success even if DB save failed - the email was sent
-      res.json({ 
-        success: true, 
-        message: "Contact form submitted successfully",
-        savedToDb 
-      });
-    } catch (error: any) {
-      console.error("Contact form error:", error);
-      res.status(500).json({ error: error.message });
-    }
-  });
+  app.get("/api/bookings", verifyToken, verifyUserOwnership("user_id"), asyncHandler(async (req: Request, res: Response) => {
+    const user = (req as any).user;
+    
+    const { data, error } = await supabase
+      .from("bookings")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+    
+    if (error) throw error;
+    res.json(data || []);
+  }));
 
-  app.get("/api/cart", async (req, res) => {
-    try {
-      const userId = req.query.user_id as string;
-      if (!userId) {
-        return res.status(400).json({ error: "user_id required" });
-      }
-      
-      const { data, error } = await supabase
-        .from("cart_items")
-        .select("*, products(*)")
-        .eq("user_id", userId);
-      
-      if (error) throw error;
-      res.json(data || []);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.post("/api/cart", async (req, res) => {
-    try {
-      const { user_id, product_id, quantity } = req.body;
-      
-      const { data: existing } = await supabase
-        .from("cart_items")
-        .select("*")
-        .eq("user_id", user_id)
-        .eq("product_id", product_id)
-        .single();
-      
-      if (existing) {
-        const { data, error } = await supabase
-          .from("cart_items")
-          .update({ quantity: existing.quantity + quantity })
-          .eq("id", existing.id)
-          .select()
-          .single();
-        
-        if (error) throw error;
-        res.json(data);
-      } else {
-        const { data, error } = await supabase
-          .from("cart_items")
-          .insert([{ user_id, product_id, quantity }])
-          .select()
-          .single();
-        
-        if (error) throw error;
-        res.json(data);
-      }
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.patch("/api/cart/:id", async (req, res) => {
-    try {
-      const { data, error } = await supabase
-        .from("cart_items")
-        .update({ quantity: req.body.quantity })
-        .eq("id", req.params.id)
-        .select()
-        .single();
-      
-      if (error) throw error;
-      res.json(data);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.delete("/api/cart/:id", async (req, res) => {
-    try {
-      const { error } = await supabase
-        .from("cart_items")
-        .delete()
-        .eq("id", req.params.id);
-      
-      if (error) throw error;
-      res.json({ success: true });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // Admin authentication middleware
-  const ADMIN_EMAIL = "smartcarecleaningsolutions@gmail.com";
-  
-  const verifyAdmin = async (req: any, res: any, next: any) => {
-    try {
-      const authHeader = req.headers.authorization;
-      if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        return res.status(401).json({ error: "Unauthorized: No token provided" });
-      }
-      
-      const token = authHeader.split(" ")[1];
-      // Supabase getUser verifies the JWT signature automatically
-      const { data: { user }, error } = await supabase.auth.getUser(token);
-      
-      if (error || !user) {
-        return res.status(401).json({ error: "Unauthorized: Invalid session" });
-      }
-      
-      // Role-based access control (RBAC)
-      if (user.email?.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
-        return res.status(403).json({ error: "Forbidden: Admin access required" });
-      }
-      
-      req.user = user;
-      next();
-    } catch (error) {
-      return res.status(500).json({ error: "Authentication failed" });
-    }
-  };
-
-  // Admin routes (protected)
-  app.get("/api/admin/contacts", verifyAdmin, async (req, res) => {
-    try {
-      const { data, error } = await supabase
-        .from("contacts")
-        .select("*")
-        .order("created_at", { ascending: false });
-      
-      if (error) {
-        console.log("Contacts table may not exist:", error.message);
-        return res.json([]);
-      }
-      res.json(data || []);
-    } catch (error: any) {
-      res.json([]);
-    }
-  });
-
-  app.delete("/api/admin/contacts/:id", verifyAdmin, async (req, res) => {
+  app.post("/api/contacts", strictLimiter, validate(schemas.contact), asyncHandler(async (req: Request, res: Response) => {
+    const { name, email, message } = req.body;
+    
+    let savedToDb = false;
     try {
       const { error } = await supabase
         .from("contacts")
-        .delete()
-        .eq("id", req.params.id);
+        .insert([{ name, email, message }]);
+      
+      if (!error) savedToDb = true;
+    } catch (dbError) {
+      console.log("Database save skipped:", dbError);
+    }
+    
+    sendContactConfirmationEmail(email, name).catch(console.error);
+    
+    res.json({ 
+      success: true, 
+      message: "Contact form submitted successfully"
+    });
+  }));
+
+  app.get("/api/cart", verifyToken, verifyUserOwnership("user_id"), asyncHandler(async (req: Request, res: Response) => {
+    const user = (req as any).user;
+    
+    const { data, error } = await supabase
+      .from("cart_items")
+      .select("*, products(*)")
+      .eq("user_id", user.id);
+    
+    if (error) throw error;
+    res.json(data || []);
+  }));
+
+  app.post("/api/cart", verifyToken, validate(schemas.cartAdd), asyncHandler(async (req: Request, res: Response) => {
+    const user = (req as any).user;
+    const { product_id, quantity } = req.body;
+    
+    if (req.body.user_id !== user.id) {
+      auditLog("IDOR_ATTEMPT", { attackerId: user.id, targetId: req.body.user_id, action: "cart_add" });
+      return res.status(403).json({ error: "Access denied" });
+    }
+    
+    const { data: existing } = await supabase
+      .from("cart_items")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("product_id", product_id)
+      .single();
+    
+    if (existing) {
+      const newQuantity = Math.min(existing.quantity + quantity, 100);
+      const { data, error } = await supabase
+        .from("cart_items")
+        .update({ quantity: newQuantity })
+        .eq("id", existing.id)
+        .select()
+        .single();
       
       if (error) throw error;
-      res.json({ success: true });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.get("/api/admin/bookings", verifyAdmin, async (req, res) => {
-    try {
+      res.json(data);
+    } else {
       const { data, error } = await supabase
-        .from("bookings")
-        .select("*")
-        .order("created_at", { ascending: false });
+        .from("cart_items")
+        .insert([{ user_id: user.id, product_id, quantity: Math.min(quantity, 100) }])
+        .select()
+        .single();
       
-      if (error) {
-        console.log("Bookings table may not exist:", error.message);
-        return res.json([]);
+      if (error) throw error;
+      res.json(data);
+    }
+  }));
+
+  app.patch("/api/cart/:id", verifyToken, validateParams(schemas.uuidParam), validate(schemas.cartUpdate), asyncHandler(async (req: Request, res: Response) => {
+    const user = (req as any).user;
+    
+    const { data: cartItem } = await supabase
+      .from("cart_items")
+      .select("user_id")
+      .eq("id", req.params.id)
+      .single();
+    
+    if (!cartItem || cartItem.user_id !== user.id) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+    
+    const { data, error } = await supabase
+      .from("cart_items")
+      .update({ quantity: Math.min(req.body.quantity, 100) })
+      .eq("id", req.params.id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    res.json(data);
+  }));
+
+  app.delete("/api/cart/:id", verifyToken, validateParams(schemas.uuidParam), asyncHandler(async (req: Request, res: Response) => {
+    const user = (req as any).user;
+    
+    const { data: cartItem } = await supabase
+      .from("cart_items")
+      .select("user_id")
+      .eq("id", req.params.id)
+      .single();
+    
+    if (!cartItem || cartItem.user_id !== user.id) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+    
+    const { error } = await supabase
+      .from("cart_items")
+      .delete()
+      .eq("id", req.params.id);
+    
+    if (error) throw error;
+    res.json({ success: true });
+  }));
+
+  app.get("/api/admin/contacts", verifyAdmin, asyncHandler(async (req: Request, res: Response) => {
+    const { data, error } = await supabase
+      .from("contacts")
+      .select("*")
+      .order("created_at", { ascending: false });
+    
+    if (error) return res.json([]);
+    res.json(data || []);
+  }));
+
+  app.delete("/api/admin/contacts/:id", verifyAdmin, validateParams(schemas.uuidParam), asyncHandler(async (req: Request, res: Response) => {
+    const admin = (req as any).user;
+    
+    const { error } = await supabase
+      .from("contacts")
+      .delete()
+      .eq("id", req.params.id);
+    
+    if (error) throw error;
+    
+    auditLog("SECURITY_EVENT", { action: "CONTACT_DELETED", contactId: req.params.id, adminEmail: admin.email });
+    res.json({ success: true });
+  }));
+
+  app.get("/api/admin/bookings", verifyAdmin, asyncHandler(async (req: Request, res: Response) => {
+    const { data, error } = await supabase
+      .from("bookings")
+      .select("*")
+      .order("created_at", { ascending: false });
+    
+    if (error) return res.json([]);
+    res.json(data || []);
+  }));
+
+  app.patch("/api/admin/bookings/:id", verifyAdmin, validateParams(schemas.uuidParam), validate(schemas.bookingStatusUpdate), asyncHandler(async (req: Request, res: Response) => {
+    const admin = (req as any).user;
+    
+    const { data, error } = await supabase
+      .from("bookings")
+      .update({ status: req.body.status })
+      .eq("id", req.params.id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    auditLog("ORDER_STATUS_CHANGED", { bookingId: req.params.id, newStatus: req.body.status, adminEmail: admin.email });
+    res.json(data);
+  }));
+
+  app.delete("/api/admin/bookings/:id", verifyAdmin, validateParams(schemas.uuidParam), asyncHandler(async (req: Request, res: Response) => {
+    const admin = (req as any).user;
+    
+    const { error } = await supabase
+      .from("bookings")
+      .delete()
+      .eq("id", req.params.id);
+    
+    if (error) throw error;
+    
+    auditLog("SECURITY_EVENT", { action: "BOOKING_DELETED", bookingId: req.params.id, adminEmail: admin.email });
+    res.json({ success: true });
+  }));
+
+  app.get("/api/admin/products", verifyAdmin, asyncHandler(async (req: Request, res: Response) => {
+    const { data, error } = await supabase
+      .from("products")
+      .select("*")
+      .order("created_at", { ascending: false });
+    
+    if (error) return res.json([]);
+    res.json(data || []);
+  }));
+
+  app.post("/api/admin/products", verifyAdmin, validate(schemas.product), asyncHandler(async (req: Request, res: Response) => {
+    const admin = (req as any).user;
+    
+    const { data, error } = await supabase
+      .from("products")
+      .insert([req.body])
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    auditLog("PRODUCT_CREATED", { productId: data.id, productName: data.name, adminEmail: admin.email });
+    res.json(data);
+  }));
+
+  app.patch("/api/admin/products/:id", verifyAdmin, validateParams(schemas.uuidParam), validate(schemas.productUpdate), asyncHandler(async (req: Request, res: Response) => {
+    const admin = (req as any).user;
+    
+    const { data, error } = await supabase
+      .from("products")
+      .update(req.body)
+      .eq("id", req.params.id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    auditLog("PRODUCT_UPDATED", { productId: req.params.id, adminEmail: admin.email });
+    res.json(data);
+  }));
+
+  app.delete("/api/admin/products/:id", verifyAdmin, validateParams(schemas.uuidParam), asyncHandler(async (req: Request, res: Response) => {
+    const admin = (req as any).user;
+    
+    const { error } = await supabase
+      .from("products")
+      .delete()
+      .eq("id", req.params.id);
+    
+    if (error) throw error;
+    
+    auditLog("PRODUCT_DELETED", { productId: req.params.id, adminEmail: admin.email });
+    res.json({ success: true });
+  }));
+
+  app.get("/api/admin/services", verifyAdmin, asyncHandler(async (req: Request, res: Response) => {
+    const { data, error } = await supabase
+      .from("services")
+      .select("*")
+      .order("created_at", { ascending: false });
+    
+    if (error) return res.json([]);
+    res.json(data || []);
+  }));
+
+  app.post("/api/admin/services", verifyAdmin, validate(schemas.service), asyncHandler(async (req: Request, res: Response) => {
+    const admin = (req as any).user;
+    
+    const { data, error } = await supabase
+      .from("services")
+      .insert([req.body])
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    auditLog("SERVICE_CREATED", { serviceId: data.id, serviceName: data.name, adminEmail: admin.email });
+    res.json(data);
+  }));
+
+  app.patch("/api/admin/services/:id", verifyAdmin, validateParams(schemas.uuidParam), validate(schemas.serviceUpdate), asyncHandler(async (req: Request, res: Response) => {
+    const admin = (req as any).user;
+    
+    const { data, error } = await supabase
+      .from("services")
+      .update(req.body)
+      .eq("id", req.params.id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    auditLog("SERVICE_UPDATED", { serviceId: req.params.id, adminEmail: admin.email });
+    res.json(data);
+  }));
+
+  app.delete("/api/admin/services/:id", verifyAdmin, validateParams(schemas.uuidParam), asyncHandler(async (req: Request, res: Response) => {
+    const admin = (req as any).user;
+    
+    const { error } = await supabase
+      .from("services")
+      .delete()
+      .eq("id", req.params.id);
+    
+    if (error) throw error;
+    
+    auditLog("SERVICE_DELETED", { serviceId: req.params.id, adminEmail: admin.email });
+    res.json({ success: true });
+  }));
+
+  app.get("/api/admin/stats", verifyAdmin, asyncHandler(async (req: Request, res: Response) => {
+    const [contactsRes, bookingsRes, productsRes, servicesRes] = await Promise.all([
+      supabase.from("contacts").select("*", { count: "exact", head: true }),
+      supabase.from("bookings").select("*", { count: "exact", head: true }),
+      supabase.from("products").select("*", { count: "exact", head: true }),
+      supabase.from("services").select("*", { count: "exact", head: true }),
+    ]);
+
+    res.json({
+      contacts: contactsRes.count || 0,
+      bookings: bookingsRes.count || 0,
+      products: productsRes.count || 0,
+      services: servicesRes.count || 0,
+      integrations: {
+        supabase: { status: "connected" },
+        resend: { status: "connected" },
+        twilio: { status: "connected" },
       }
-      res.json(data || []);
-    } catch (error: any) {
-      res.json([]);
-    }
-  });
-
-  app.patch("/api/admin/bookings/:id", verifyAdmin, async (req, res) => {
-    try {
-      const { data, error } = await supabase
-        .from("bookings")
-        .update(req.body)
-        .eq("id", req.params.id)
-        .select()
-        .single();
-      
-      if (error) throw error;
-      res.json(data);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.delete("/api/admin/bookings/:id", verifyAdmin, async (req, res) => {
-    try {
-      const { error } = await supabase
-        .from("bookings")
-        .delete()
-        .eq("id", req.params.id);
-      
-      if (error) throw error;
-      res.json({ success: true });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.get("/api/admin/products", verifyAdmin, async (req, res) => {
-    try {
-      const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .order("created_at", { ascending: false });
-      
-      if (error) {
-        return res.json([]);
-      }
-      res.json(data || []);
-    } catch (error: any) {
-      res.json([]);
-    }
-  });
-
-  app.post("/api/admin/products", verifyAdmin, async (req, res) => {
-    try {
-      const { data, error } = await supabase
-        .from("products")
-        .insert([req.body])
-        .select()
-        .single();
-      
-      if (error) throw error;
-      res.json(data);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.patch("/api/admin/products/:id", verifyAdmin, async (req, res) => {
-    try {
-      const { data, error } = await supabase
-        .from("products")
-        .update(req.body)
-        .eq("id", req.params.id)
-        .select()
-        .single();
-      
-      if (error) throw error;
-      res.json(data);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.delete("/api/admin/products/:id", verifyAdmin, async (req, res) => {
-    try {
-      const { error } = await supabase
-        .from("products")
-        .delete()
-        .eq("id", req.params.id);
-      
-      if (error) throw error;
-      res.json({ success: true });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.get("/api/admin/services", verifyAdmin, async (req, res) => {
-    try {
-      const { data, error } = await supabase
-        .from("services")
-        .select("*")
-        .order("created_at", { ascending: false });
-      
-      if (error) {
-        return res.json([]);
-      }
-      res.json(data || []);
-    } catch (error: any) {
-      res.json([]);
-    }
-  });
-
-  app.post("/api/admin/services", verifyAdmin, async (req, res) => {
-    try {
-      const { data, error } = await supabase
-        .from("services")
-        .insert([req.body])
-        .select()
-        .single();
-      
-      if (error) throw error;
-      res.json(data);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.patch("/api/admin/services/:id", verifyAdmin, async (req, res) => {
-    try {
-      const { data, error } = await supabase
-        .from("services")
-        .update(req.body)
-        .eq("id", req.params.id)
-        .select()
-        .single();
-      
-      if (error) throw error;
-      res.json(data);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.delete("/api/admin/services/:id", verifyAdmin, async (req, res) => {
-    try {
-      const { error } = await supabase
-        .from("services")
-        .delete()
-        .eq("id", req.params.id);
-      
-      if (error) throw error;
-      res.json({ success: true });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.get("/api/admin/stats", verifyAdmin, async (req, res) => {
-    try {
-      const [contactsRes, bookingsRes, productsRes, servicesRes] = await Promise.all([
-        supabase.from("contacts").select("*", { count: "exact", head: true }),
-        supabase.from("bookings").select("*", { count: "exact", head: true }),
-        supabase.from("products").select("*", { count: "exact", head: true }),
-        supabase.from("services").select("*", { count: "exact", head: true }),
-      ]);
-
-      res.json({
-        contacts: contactsRes.count || 0,
-        bookings: bookingsRes.count || 0,
-        products: productsRes.count || 0,
-        services: servicesRes.count || 0,
-        integrations: {
-          supabase: { status: "connected", url: process.env.SUPABASE_URL },
-          resend: { status: "connected" },
-          twilio: { status: "connected" },
-        }
-      });
-    } catch (error: any) {
-      res.json({ contacts: 0, bookings: 0, products: 0, services: 0, integrations: {} });
-    }
-  });
+    });
+  }));
 
   return httpServer;
 }

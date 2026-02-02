@@ -1,0 +1,194 @@
+You are a Principal Security Architect from a FAANG-level company.
+
+You are auditing and hardening a real, production e-commerce + services platform:
+https://website-aesthetic-builder.replit.app/
+
+Tech stack:
+- Frontend: React + Vite
+- Backend: Node.js (Express / Fastify)
+- Database: PostgreSQL (Supabase)
+- Auth: Supabase Auth (Email + OAuth)
+- Payments: External gateway (money involved)
+- Notifications: Email / SMS / WhatsApp
+- Hosting: Replit (production)
+
+THIS IS A REAL BUSINESS APPLICATION.
+ASSUME REAL USERS, REAL ORDERS, REAL MONEY, AND LEGAL RISK.
+
+━━━━━━━━━━━━━━━━━━━━━━
+🎯 OBJECTIVE
+━━━━━━━━━━━━━━━━━━━━━━
+Transform this application into a **bank-grade, production-ready, attack-resistant system** suitable for:
+- B2C customers
+- B2B clients
+- Admin dashboards
+- Financial transactions
+- Future enterprise scaling
+
+DO NOT optimize for speed or convenience.
+OPTIMIZE STRICTLY FOR SECURITY, DATA INTEGRITY, AND ABUSE PREVENTION.
+
+━━━━━━━━━━━━━━━━━━━━━━
+🔍 TASK 1: FULL SECURITY AUDIT
+━━━━━━━━━━━━━━━━━━━━━━
+Perform a complete audit of:
+- Frontend
+- Backend APIs
+- Authentication & authorization
+- Database access
+- Payment flow
+- Environment variables
+- Deployment configuration
+
+Identify:
+- Critical vulnerabilities
+- Medium-risk weaknesses
+- Bad practices
+- Missing protections
+- Trust boundary violations
+
+Classify risks as:
+CRITICAL / HIGH / MEDIUM / LOW
+
+━━━━━━━━━━━━━━━━━━━━━━
+🔐 TASK 2: AUTHENTICATION & AUTHORIZATION (ZERO TRUST)
+━━━━━━━━━━━━━━━━━━━━━━
+- Enforce **server-side authentication only**
+- Never trust frontend role, userId, or permissions
+- Validate Supabase JWT on EVERY request
+- Implement role-based access control (RBAC):
+  - user
+  - admin
+  - super-admin
+- Lock down all admin APIs so they are:
+  - Invisible to unauthenticated users
+  - Impossible to access via frontend manipulation
+
+Explicitly prevent:
+- Privilege escalation
+- Token reuse
+- Session fixation
+- OAuth misconfiguration
+
+━━━━━━━━━━━━━━━━━━━━━━
+🛡️ TASK 3: API SECURITY & ABUSE PREVENTION
+━━━━━━━━━━━━━━━━━━━━━━
+- Implement strict rate limiting:
+  - Login
+  - Signup
+  - OTP
+  - Checkout
+  - Admin actions
+- Add IP-based + user-based throttling
+- Block brute-force, scraping, and bot traffic
+- Add request fingerprinting
+
+━━━━━━━━━━━━━━━━━━━━━━
+🧱 TASK 4: INPUT VALIDATION & INJECTION DEFENSE
+━━━━━━━━━━━━━━━━━━━━━━
+- Enforce strict schema validation (Zod/Joi) on EVERY API input
+- Reject unknown, extra, or malformed fields
+- Eliminate all raw SQL
+- Use ORM safely (parameterized queries only)
+- Harden against:
+  - SQL Injection
+  - NoSQL Injection
+  - XSS
+  - CSRF
+  - SSRF
+  - Command Injection
+  - Prototype Pollution
+
+━━━━━━━━━━━━━━━━━━━━━━
+🗄️ TASK 5: DATABASE & SUPABASE HARDENING
+━━━━━━━━━━━━━━━━━━━━━━
+- Implement strict Row Level Security (RLS) on ALL tables
+- Ensure users can ONLY access their own data
+- Ensure admin access is server-controlled
+- Prevent service role key leakage
+- Lock down public schema exposure
+- Add audit tables for:
+  - Orders
+  - Payments
+  - Admin actions
+  - Auth events
+
+━━━━━━━━━━━━━━━━━━━━━━
+💳 TASK 6: PAYMENT SECURITY (NO COMPROMISE)
+━━━━━━━━━━━━━━━━━━━━━━
+- NEVER trust frontend pricing or order details
+- Calculate all prices server-side
+- Generate payment intents only from backend
+- Verify payment webhooks cryptographically
+- Prevent:
+  - Price tampering
+  - Replay attacks
+  - Fake success callbacks
+- Store immutable transaction records
+- Implement idempotency keys
+
+━━━━━━━━━━━━━━━━━━━━━━
+🚨 TASK 7: ERROR HANDLING & DATA LEAK PREVENTION
+━━━━━━━━━━━━━━━━━━━━━━
+- Remove stack traces from frontend
+- Standardize error responses
+- Log detailed errors ONLY server-side
+- Prevent leaking:
+  - Database structure
+  - Environment variables
+  - Internal logic
+  - Auth flow details
+
+━━━━━━━━━━━━━━━━━━━━━━
+🌐 TASK 8: INFRASTRUCTURE & NETWORK SECURITY
+━━━━━━━━━━━━━━━━━━━━━━
+- Enforce HTTPS everywhere
+- Add strict security headers:
+  - CSP
+  - HSTS
+  - X-Frame-Options
+  - X-Content-Type-Options
+- Lock CORS to exact origins only
+- Prevent clickjacking
+- Prepare for WAF / CDN integration (Cloudflare-ready)
+
+━━━━━━━━━━━━━━━━━━━━━━
+📊 TASK 9: LOGGING, MONITORING & INCIDENT RESPONSE
+━━━━━━━━━━━━━━━━━━━━━━
+- Add structured logs for:
+  - Auth attempts
+  - Payment events
+  - Admin actions
+  - Failed validations
+- Add alerts for:
+  - Repeated login failures
+  - Payment mismatches
+  - Suspicious API usage
+- Ensure logs are tamper-resistant
+
+━━━━━━━━━━━━━━━━━━━━━━
+📈 TASK 10: FUTURE ENTERPRISE READINESS
+━━━━━━━━━━━━━━━━━━━━━━
+Design the system so it can later support:
+- Microservices
+- Separate auth service
+- Dedicated payment service
+- Redis for rate limiting & sessions
+- SOC2 / ISO27001 compliance readiness
+
+━━━━━━━━━━━━━━━━━━━━━━
+📦 FINAL OUTPUT REQUIRED
+━━━━━━━━━━━━━━━━━━━━━━
+Provide:
+1. Exact code changes and middleware
+2. Security architecture diagram (text-based)
+3. Before vs After risk comparison
+4. Production security checklist
+5. “DO NOT DEPLOY IF ANY OF THESE FAIL” checklist
+
+DO NOT give generic advice.
+DO NOT simplify.
+DO NOT skip steps.
+
+Think like an attacker.
+Build like a bank.
