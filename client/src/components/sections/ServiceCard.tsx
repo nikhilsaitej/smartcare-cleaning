@@ -27,7 +27,8 @@ export default function ServiceCard({ id, title, description, price, rating, ima
       title, 
       price: numericPrice, 
       image, 
-      category: "Service" 
+      category: "Service",
+      rating: rating || 4.8
     });
   };
 
