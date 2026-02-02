@@ -90,9 +90,30 @@ The application implements enterprise-grade security measures:
 
 ## External Dependencies
 
+### Razorpay Payment Gateway
+- **Purpose**: Secure payment processing for product orders
+- **Features**:
+  - Server-side order creation with price verification
+  - Cryptographic webhook signature verification (HMAC-SHA256)
+  - Idempotency keys to prevent duplicate transactions
+  - Automatic order status updates via webhooks
+- **Environment Variables Required**:
+  - `RAZORPAY_KEY_ID` - Razorpay API Key ID
+  - `RAZORPAY_KEY_SECRET` - Razorpay API Key Secret  
+  - `RAZORPAY_WEBHOOK_SECRET` - Webhook signature verification secret
+- **API Endpoints**:
+  - `GET /api/payment/config` - Get Razorpay key for frontend
+  - `POST /api/payment/create-order` - Create payment order
+  - `POST /api/payment/verify` - Verify payment signature
+  - `POST /api/payment/webhook` - Handle Razorpay webhooks
+
 ### Supabase Integration
 - **Purpose**: Authentication and database storage
-- **Tables**: products, services, bookings, contacts
+- **Tables**: products, services, bookings, contacts, orders
+- **RLS Policies**: Comprehensive Row Level Security in `supabase/rls_policies.sql`
+  - Products/Services: Public read, admin-only write
+  - Bookings/Orders: Users see own, admin sees all
+  - Contacts: Anyone can insert, admin-only read
 - **Environment Variables Required**:
   - `SUPABASE_URL` - Supabase project URL
   - `SUPABASE_ANON_KEY` - Supabase anonymous/public key
