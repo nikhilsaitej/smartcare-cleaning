@@ -104,9 +104,11 @@ export default function Cart() {
                         <span data-testid="text-total">₹{total}</span>
                       </div>
                     </div>
-                    <Button className="w-full bg-orange-500 hover:bg-orange-600 h-12 text-lg font-bold shadow-lg shadow-orange-500/20" data-testid="button-checkout">
-                      Checkout <CreditCard className="ml-2 h-5 w-5" />
-                    </Button>
+                    <Link href="/checkout">
+                      <Button className="w-full bg-orange-500 hover:bg-orange-600 h-12 text-lg font-bold shadow-lg shadow-orange-500/20" data-testid="button-checkout">
+                        Checkout <CreditCard className="ml-2 h-5 w-5" />
+                      </Button>
+                    </Link>
                     <p className="text-xs text-center text-gray-400 mt-4">
                       Taxes calculated at checkout. Same-day delivery available in Vijayawada.
                     </p>

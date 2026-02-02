@@ -1,7 +1,8 @@
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Star, Check } from "lucide-react";
+import { Star, Check, Plus, Minus } from "lucide-react";
+import { useCart } from "@/contexts/CartContext";
 
 interface ServiceProps {
   id: string;
@@ -13,7 +14,23 @@ interface ServiceProps {
   features: string[];
 }
 
-export default function ServiceCard({ title, description, price, rating, image, features }: ServiceProps) {
+export default function ServiceCard({ id, title, description, price, rating, image, features }: ServiceProps) {
+  const { items, addToCart, updateQuantity } = useCart();
+  const cartItem = items.find(item => item.id === id);
+  const quantity = cartItem?.quantity || 0;
+
+  const numericPrice = parseInt(price.replace(/[^0-9]/g, ''));
+
+  const handleAddToCart = () => {
+    addToCart({ 
+      id, 
+      title, 
+      price: numericPrice, 
+      image, 
+      category: "Service" 
+    });
+  };
+
   return (
     <Card className="group overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 h-full flex flex-col">
       <div className="relative h-48 overflow-hidden">
@@ -58,9 +75,35 @@ export default function ServiceCard({ title, description, price, rating, image, 
           <span className="text-xs text-gray-500 font-medium uppercase display-block">Starting at</span>
           <span className="text-lg font-bold text-primary block leading-none">{price}</span>
         </div>
-        <Button className="bg-orange-500 hover:bg-orange-600 text-white shadow-sm">
-          Book Now
-        </Button>
+        
+        {quantity > 0 ? (
+          <div className="flex items-center gap-2 bg-white rounded-lg p-1 border shadow-sm">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-7 w-7 hover:bg-slate-50"
+              onClick={() => updateQuantity(id, quantity - 1)}
+            >
+              <Minus className="h-3 w-3" />
+            </Button>
+            <span className="font-bold w-5 text-center text-sm">{quantity}</span>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-7 w-7 hover:bg-slate-50"
+              onClick={() => updateQuantity(id, quantity + 1)}
+            >
+              <Plus className="h-3 w-3" />
+            </Button>
+          </div>
+        ) : (
+          <Button 
+            className="bg-orange-500 hover:bg-orange-600 text-white shadow-sm"
+            onClick={handleAddToCart}
+          >
+            Add <Plus className="ml-1 h-3 w-3" />
+          </Button>
+        )}
       </CardFooter>
     </Card>
   );
