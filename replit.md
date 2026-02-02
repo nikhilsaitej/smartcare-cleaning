@@ -43,7 +43,38 @@ Key backend files:
 - `server/routes.ts` - API route definitions
 - `server/supabase.ts` - Supabase client initialization
 - `server/storage.ts` - User storage interface (currently in-memory)
+- `server/security/` - Security middleware and utilities
 - `shared/schema.ts` - Drizzle database schema definitions
+
+### Security Architecture
+The application implements enterprise-grade security measures:
+
+**Authentication & Authorization:**
+- `verifyToken` - JWT validation for authenticated routes
+- `verifyAdmin` - Admin-only access (restricted to smartcarecleaningsolutions@gmail.com)
+- `verifyUserOwnership` - IDOR prevention for user-specific resources
+
+**Rate Limiting:**
+- `authLimiter` - 10 requests per 15 minutes on auth endpoints
+- `otpLimiter` - 5 OTP requests per hour
+- `strictLimiter` - 10 requests per minute on sensitive endpoints
+- `adminLimiter` - 60 requests per minute for admin operations
+
+**Input Validation:**
+- Zod schema validation on all API inputs
+- UUID validation for all ID parameters
+- Phone/email format validation
+- Request body sanitization (XSS prevention)
+
+**Security Headers (Production):**
+- Helmet middleware with CSP, HSTS, X-Frame-Options
+- Strict CORS with origin whitelist
+- Request size limits (500KB)
+
+**Audit Logging:**
+- Structured logging for auth events, admin actions, security incidents
+- Severity-based classification (INFO/WARNING/CRITICAL)
+- IP masking for privacy compliance
 
 ### Authentication Flow
 - Supabase Auth handles user registration and login
