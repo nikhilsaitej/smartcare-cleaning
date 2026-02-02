@@ -105,7 +105,6 @@ export function log(message: string, source = "express") {
 (async () => {
   await registerRoutes(httpServer, app);
 
-  app.use(notFoundHandler);
   app.use(errorHandler);
 
   if (process.env.NODE_ENV === "production") {
