@@ -10,8 +10,17 @@ import {
   authLimiter, 
   otpLimiter,
   strictLimiter,
-  adminLimiter
+  adminLimiter,
+  checkoutLimiter
 } from "./security/middleware";
+import { 
+  createOrder, 
+  verifyPaymentSignature, 
+  verifyWebhookSignature, 
+  handlePaymentSuccess, 
+  handleWebhookEvent,
+  getRazorpayKeyId 
+} from "./razorpay";
 import { schemas, validate, validateParams, validateQuery } from "./security/validation";
 import { asyncHandler } from "./security/errorHandler";
 import { auditLog } from "./security/auditLogger";
@@ -450,12 +459,115 @@ export async function registerRoutes(
     res.json({ success: true });
   }));
 
+  app.get("/api/payment/config", verifyToken, (req: Request, res: Response) => {
+    const keyId = getRazorpayKeyId();
+    if (!keyId) {
+      return res.status(503).json({ error: "Payment gateway not configured" });
+    }
+    res.json({ keyId });
+  });
+
+  app.post("/api/payment/create-order", checkoutLimiter, verifyToken, validate(schemas.createOrder), asyncHandler(async (req: Request, res: Response) => {
+    const user = (req as any).user;
+    const { items, idempotencyKey } = req.body;
+
+    let totalAmount = 0;
+    for (const item of items) {
+      totalAmount += item.price * item.quantity * 100;
+    }
+
+    const order = await createOrder({
+      amount: totalAmount,
+      currency: "INR",
+      receipt: `order_${Date.now()}`,
+      userId: user.id,
+      items,
+      idempotencyKey,
+    });
+
+    res.json({
+      orderId: order.id,
+      amount: order.amount,
+      currency: order.currency,
+    });
+  }));
+
+  app.post("/api/payment/verify", checkoutLimiter, verifyToken, validate(schemas.verifyPayment), asyncHandler(async (req: Request, res: Response) => {
+    const user = (req as any).user;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+
+    const isValid = verifyPaymentSignature(razorpay_order_id, razorpay_payment_id, razorpay_signature);
+
+    if (!isValid) {
+      auditLog("PAYMENT_FAILURE", {
+        orderId: razorpay_order_id,
+        paymentId: razorpay_payment_id,
+        userId: user.id,
+        reason: "Invalid signature",
+      });
+      return res.status(400).json({ error: "Payment verification failed" });
+    }
+
+    const order = await handlePaymentSuccess(razorpay_order_id, razorpay_payment_id, user.id);
+
+    res.json({ 
+      success: true, 
+      orderId: order.id,
+      message: "Payment verified successfully" 
+    });
+  }));
+
+  app.post("/api/payment/webhook", asyncHandler(async (req: Request, res: Response) => {
+    const signature = req.headers["x-razorpay-signature"] as string;
+    
+    if (!signature) {
+      auditLog("PAYMENT_WEBHOOK_INVALID", { reason: "Missing signature" });
+      return res.status(400).json({ error: "Missing signature" });
+    }
+
+    const rawBody = (req as any).rawBody;
+    const isValid = verifyWebhookSignature(rawBody, signature);
+
+    if (!isValid) {
+      auditLog("PAYMENT_WEBHOOK_INVALID", { reason: "Invalid signature" });
+      return res.status(400).json({ error: "Invalid signature" });
+    }
+
+    await handleWebhookEvent(req.body);
+
+    res.json({ status: "ok" });
+  }));
+
+  app.get("/api/orders", verifyToken, asyncHandler(async (req: Request, res: Response) => {
+    const user = (req as any).user;
+    
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+    
+    if (error) throw error;
+    res.json(data || []);
+  }));
+
+  app.get("/api/admin/orders", adminLimiter, verifyAdmin, asyncHandler(async (req: Request, res: Response) => {
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*")
+      .order("created_at", { ascending: false });
+    
+    if (error) return res.json([]);
+    res.json(data || []);
+  }));
+
   app.get("/api/admin/stats", adminLimiter, verifyAdmin, asyncHandler(async (req: Request, res: Response) => {
-    const [contactsRes, bookingsRes, productsRes, servicesRes] = await Promise.all([
+    const [contactsRes, bookingsRes, productsRes, servicesRes, ordersRes] = await Promise.all([
       supabase.from("contacts").select("*", { count: "exact", head: true }),
       supabase.from("bookings").select("*", { count: "exact", head: true }),
       supabase.from("products").select("*", { count: "exact", head: true }),
       supabase.from("services").select("*", { count: "exact", head: true }),
+      supabase.from("orders").select("*", { count: "exact", head: true }),
     ]);
 
     res.json({
@@ -463,10 +575,12 @@ export async function registerRoutes(
       bookings: bookingsRes.count || 0,
       products: productsRes.count || 0,
       services: servicesRes.count || 0,
+      orders: ordersRes.count || 0,
       integrations: {
         supabase: { status: "connected" },
         resend: { status: "connected" },
         twilio: { status: "connected" },
+        razorpay: { status: getRazorpayKeyId() ? "connected" : "not_configured" },
       }
     });
   }));

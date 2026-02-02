@@ -101,6 +101,21 @@ export const schemas = {
 
   userIdQuery: z.object({
     user_id: z.string().uuid().optional()
+  }),
+
+  createOrder: z.object({
+    items: z.array(z.object({
+      productId: z.string().uuid(),
+      quantity: z.number().int().min(1).max(100),
+      price: z.number().positive()
+    })).min(1).max(50),
+    idempotencyKey: z.string().min(16).max(64)
+  }),
+
+  verifyPayment: z.object({
+    razorpay_order_id: z.string().min(1).max(100),
+    razorpay_payment_id: z.string().min(1).max(100),
+    razorpay_signature: z.string().min(1).max(200)
   })
 };
 
