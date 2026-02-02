@@ -1,122 +1,317 @@
-import { Link } from "wouter";
-import { ShoppingBag, Trash2, Plus, Minus, CreditCard } from "lucide-react";
+import { useState } from "react";
+import { Link, useLocation } from "wouter";
+import { 
+  ShoppingBag, Trash2, Plus, Minus, CreditCard, MapPin, Clock, 
+  Phone, ChevronRight, Info, CheckCircle2, Tag, Percent, ChevronDown
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Cart() {
-  const { items, updateQuantity, removeFromCart, subtotal } = useCart();
+  const { items, updateQuantity, removeFromCart, subtotal, clearCart } = useCart();
+  const { user } = useAuth();
+  const [, setLocation] = useLocation();
+  const [selectedSlot, setSelectedSlot] = useState("");
+  const [avoidCalling, setAvoidCalling] = useState(false);
   
-  const deliveryFee = subtotal > 500 ? 0 : 50;
-  const total = subtotal + deliveryFee;
+  const taxes = Math.round(subtotal * 0.05);
+  const deliveryFee = subtotal > 1000 ? 0 : 50;
+  const total = subtotal + taxes + deliveryFee;
 
-  return (
-    <div className="min-h-screen bg-slate-50">
-      <Navbar />
-      <main className="pt-24 pb-20">
-        <div className="container mx-auto px-4">
-          <h1 className="text-3xl font-display font-bold text-primary mb-8 flex items-center gap-3">
-            <ShoppingBag className="h-8 w-8 text-orange-500" />
-            Your Shopping Cart
-          </h1>
+  const handleCheckout = () => {
+    if (!user) {
+      setLocation("/login?redirect=/cart");
+      return;
+    }
+    setLocation("/checkout");
+  };
 
-          {items.length === 0 ? (
-            <Card className="text-center py-20">
-              <CardContent>
-                <ShoppingBag className="h-16 w-16 text-gray-200 mx-auto mb-4" />
-                <h2 className="text-xl font-bold text-gray-600 mb-2">Your cart is empty</h2>
-                <p className="text-gray-400 mb-8">Looks like you haven't added anything to your cart yet.</p>
-                <Link href="/products">
-                  <Button className="bg-primary hover:bg-primary/90 px-8" data-testid="button-continue-shopping">
-                    Continue Shopping
-                  </Button>
-                </Link>
+  if (items.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <main className="pt-24 pb-20">
+          <div className="container mx-auto px-4 max-w-2xl">
+            <Card className="text-center py-16 border-none shadow-lg">
+              <CardContent className="space-y-6">
+                <div className="h-24 w-24 bg-blue-50 rounded-full flex items-center justify-center mx-auto">
+                  <ShoppingBag className="h-12 w-12 text-primary/40" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Your cart is empty</h2>
+                  <p className="text-gray-500">Looks like you haven't added anything yet.</p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
+                  <Link href="/services">
+                    <Button variant="outline" className="w-full sm:w-auto px-8">
+                      Browse Services
+                    </Button>
+                  </Link>
+                  <Link href="/products">
+                    <Button className="w-full sm:w-auto bg-primary hover:bg-primary/90 px-8">
+                      Shop Products
+                    </Button>
+                  </Link>
+                </div>
               </CardContent>
             </Card>
-          ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Item List */}
-              <div className="lg:col-span-2 space-y-4">
-                {items.map((item) => (
-                  <Card key={item.id} className="border-none shadow-sm overflow-hidden" data-testid={`cart-item-${item.id}`}>
-                    <CardContent className="p-4 flex items-center gap-6">
-                      <div className="h-24 w-24 bg-white rounded-lg p-2 shrink-0">
-                        <img src={item.image} alt={item.title} className="w-full h-full object-contain" />
-                      </div>
-                      <div className="flex-grow">
-                        <span className="text-[10px] font-bold text-orange-500 uppercase">{item.category}</span>
-                        <h3 className="font-bold text-primary text-lg mb-1">{item.title}</h3>
-                        <p className="text-primary font-bold">₹{item.price}</p>
-                      </div>
-                      <div className="flex items-center gap-3 bg-slate-100 rounded-lg p-1">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-8 w-8 hover:bg-white"
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                          data-testid={`button-decrease-${item.id}`}
-                        >
-                          <Minus className="h-4 w-4" />
-                        </Button>
-                        <span className="font-bold w-4 text-center" data-testid={`text-quantity-${item.id}`}>{item.quantity}</span>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-8 w-8 hover:bg-white"
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          data-testid={`button-increase-${item.id}`}
-                        >
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="text-red-400 hover:text-red-600 hover:bg-red-50"
-                        onClick={() => removeFromCart(item.id)}
-                        data-testid={`button-remove-${item.id}`}
-                      >
-                        <Trash2 className="h-5 w-5" />
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
-              {/* Order Summary */}
-              <div className="lg:col-span-1">
-                <Card className="border-none shadow-lg sticky top-24">
-                  <CardContent className="p-6">
-                    <h2 className="text-xl font-bold text-primary mb-6">Order Summary</h2>
-                    <div className="space-y-4 mb-6">
-                      <div className="flex justify-between text-gray-600">
-                        <span>Subtotal</span>
-                        <span className="font-bold" data-testid="text-subtotal">₹{subtotal}</span>
-                      </div>
-                      <div className="flex justify-between text-gray-600">
-                        <span>Delivery Fee</span>
-                        <span className="font-bold text-green-600" data-testid="text-delivery">{deliveryFee === 0 ? "FREE" : `₹${deliveryFee}`}</span>
-                      </div>
-                      <div className="border-t pt-4 flex justify-between text-xl font-bold text-primary">
-                        <span>Total</span>
-                        <span data-testid="text-total">₹{total}</span>
-                      </div>
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      <main className="pt-24 pb-20">
+        <div className="container mx-auto px-4 max-w-6xl">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-2xl font-bold text-gray-900">Checkout</h1>
+            <Badge variant="secondary" className="text-sm">{items.length} {items.length === 1 ? 'item' : 'items'}</Badge>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* Left Column */}
+            <div className="lg:col-span-7 space-y-4">
+              {/* Contact Info */}
+              <Card className="border-none shadow-sm overflow-hidden">
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-4">
+                    <div className="h-10 w-10 bg-green-50 rounded-full flex items-center justify-center shrink-0">
+                      <Phone className="h-5 w-5 text-green-600" />
                     </div>
-                    <Link href="/checkout">
-                      <Button className="w-full bg-orange-500 hover:bg-orange-600 h-12 text-lg font-bold shadow-lg shadow-orange-500/20" data-testid="button-checkout">
-                        Checkout <CreditCard className="ml-2 h-5 w-5" />
-                      </Button>
-                    </Link>
-                    <p className="text-xs text-center text-gray-400 mt-4">
-                      Taxes calculated at checkout. Same-day delivery available in Vijayawada.
-                    </p>
-                  </CardContent>
-                </Card>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-gray-500">Send booking details to</p>
+                      <p className="font-semibold truncate">{user?.email || user?.phone || "Login to continue"}</p>
+                    </div>
+                    <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Address */}
+              <Card className="border-none shadow-sm overflow-hidden">
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-4">
+                    <div className="h-10 w-10 bg-gray-100 rounded-full flex items-center justify-center shrink-0">
+                      <MapPin className="h-5 w-5 text-gray-600" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold">Address</p>
+                    </div>
+                  </div>
+                  <Button className="w-full mt-4 bg-primary hover:bg-primary/90 h-12 font-semibold">
+                    Select address
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Time Slot */}
+              <Card className="border-none shadow-sm overflow-hidden">
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="h-10 w-10 bg-gray-100 rounded-full flex items-center justify-center shrink-0">
+                      <Clock className="h-5 w-5 text-gray-600" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold">Slot</p>
+                    </div>
+                    <ChevronDown className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <RadioGroup value={selectedSlot} onValueChange={setSelectedSlot} className="grid grid-cols-3 gap-2">
+                    {["9 AM", "12 PM", "3 PM"].map((slot) => (
+                      <div key={slot}>
+                        <RadioGroupItem value={slot} id={slot} className="peer sr-only" />
+                        <Label
+                          htmlFor={slot}
+                          className="flex items-center justify-center p-3 bg-gray-50 border border-gray-200 rounded-lg cursor-pointer hover:border-primary/50 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-blue-50 transition-all text-sm font-medium"
+                        >
+                          {slot}
+                        </Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
+                </CardContent>
+              </Card>
+
+              {/* Payment Method */}
+              <Card className="border-none shadow-sm overflow-hidden">
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-4">
+                    <div className="h-10 w-10 bg-gray-100 rounded-full flex items-center justify-center shrink-0">
+                      <CreditCard className="h-5 w-5 text-gray-600" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold">Payment Method</p>
+                      <p className="text-sm text-gray-500">Razorpay (Cards, UPI, Net Banking)</p>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-gray-400" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Cancellation Policy */}
+              <div className="p-5 bg-white rounded-2xl border border-gray-100 shadow-sm">
+                <h3 className="font-bold text-gray-900 mb-2">Cancellation policy</h3>
+                <p className="text-sm text-gray-600 leading-relaxed mb-3">
+                  Free cancellations if done more than 12 hrs before the service or if a professional isn't assigned. A fee will be charged otherwise.
+                </p>
+                <button className="text-primary text-sm font-semibold hover:underline">
+                  Read full policy
+                </button>
               </div>
             </div>
-          )}
+
+            {/* Right Column - Order Summary */}
+            <div className="lg:col-span-5">
+              <Card className="border-none shadow-lg sticky top-24 overflow-hidden">
+                <CardContent className="p-0">
+                  {/* Items List */}
+                  <div className="p-5 space-y-4 max-h-[320px] overflow-y-auto">
+                    {items.map((item) => (
+                      <div key={item.id} className="flex items-start gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-gray-900 leading-tight">{item.title}</p>
+                          <div className="flex items-center gap-3 mt-2">
+                            <div className="inline-flex items-center border border-primary rounded-md overflow-hidden">
+                              <button 
+                                onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                className="px-2 py-1 text-primary hover:bg-primary/5 transition-colors"
+                              >
+                                <Minus className="h-3 w-3" />
+                              </button>
+                              <span className="px-3 py-1 text-sm font-bold text-primary border-x border-primary">
+                                {item.quantity}
+                              </span>
+                              <button 
+                                onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                className="px-2 py-1 text-primary hover:bg-primary/5 transition-colors"
+                              >
+                                <Plus className="h-3 w-3" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                        <p className="font-bold text-gray-900 shrink-0">₹{item.price * item.quantity}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <Separator />
+
+                  {/* Frequently Added Section */}
+                  <div className="p-5 bg-gray-50/50">
+                    <p className="text-sm font-semibold text-gray-700 mb-3">Frequently added together</p>
+                    <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                      <div className="shrink-0 flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-xl min-w-[200px]">
+                        <div className="h-12 w-12 bg-gray-100 rounded-lg"></div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">Deep Cleaning</p>
+                          <p className="text-sm font-bold text-primary">₹599</p>
+                        </div>
+                        <Button size="sm" variant="ghost" className="text-primary font-semibold shrink-0">Add</Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Options */}
+                  <div className="p-5">
+                    <div className="flex items-center gap-3">
+                      <Checkbox 
+                        id="avoid-calling" 
+                        checked={avoidCalling} 
+                        onCheckedChange={(checked) => setAvoidCalling(!!checked)} 
+                      />
+                      <Label htmlFor="avoid-calling" className="text-sm text-gray-700 cursor-pointer">
+                        Avoid calling before reaching the location
+                      </Label>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Coupons */}
+                  <div className="p-5">
+                    <div className="flex items-center justify-between cursor-pointer hover:bg-gray-50 -mx-5 px-5 py-2 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <Percent className="h-5 w-5 text-green-600" />
+                        <span className="font-semibold text-gray-900">Coupons and offers</span>
+                      </div>
+                      <span className="text-primary font-semibold text-sm">5 offers &gt;</span>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Payment Summary */}
+                  <div className="p-5 space-y-3">
+                    <h3 className="font-bold text-gray-900 mb-4">Payment summary</h3>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Item total</span>
+                      <span className="font-medium">₹{subtotal}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600 flex items-center gap-1">
+                        Taxes and Fee
+                        <Info className="h-3 w-3 text-gray-400" />
+                      </span>
+                      <span className="font-medium">₹{taxes}</span>
+                    </div>
+                    {deliveryFee > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Delivery Fee</span>
+                        <span className="font-medium">₹{deliveryFee}</span>
+                      </div>
+                    )}
+                    <Separator className="my-3" />
+                    <div className="flex justify-between">
+                      <span className="font-bold text-gray-900">Total amount</span>
+                      <span className="font-bold text-gray-900">₹{total}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-bold text-gray-900">Amount to pay</span>
+                      <span className="font-bold text-gray-900">₹{total}</span>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Final Amount & Checkout */}
+                  <div className="p-5 bg-white">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <p className="text-sm text-gray-500">Amount to pay</p>
+                        <p className="text-2xl font-bold text-gray-900">₹{total}</p>
+                      </div>
+                      <button className="text-primary text-sm font-semibold hover:underline">
+                        View breakup
+                      </button>
+                    </div>
+                    <Button 
+                      onClick={handleCheckout}
+                      className="w-full bg-primary hover:bg-primary/90 h-14 text-lg font-bold rounded-xl shadow-lg"
+                    >
+                      {user ? "Proceed to Pay" : "Login to Continue"}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </div>
       </main>
       <Footer />
