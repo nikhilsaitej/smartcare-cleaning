@@ -10,6 +10,11 @@ export const schemas = {
     phone: z.string().min(10).max(20).regex(phoneRegex, "Invalid phone number format")
   }),
 
+  verifyOtp: z.object({
+    phone: z.string().min(10).max(20).regex(phoneRegex, "Invalid phone number format"),
+    otp: z.string().length(6).regex(/^\d{6}$/, "OTP must be 6 digits")
+  }),
+
   signupSuccess: z.object({
     email: z.string().email().max(255)
   }),

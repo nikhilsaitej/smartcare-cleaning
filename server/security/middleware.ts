@@ -111,9 +111,6 @@ export const authLimiter = rateLimit({
   message: { error: "Too many attempts. Please try again in 15 minutes." },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => {
-    return req.ip || req.headers['x-forwarded-for'] as string || 'unknown';
-  },
   handler: (req, res) => {
     auditLog("RATE_LIMIT_AUTH", { ip: req.ip, path: req.path });
     res.status(429).json({ error: "Too many attempts. Please try again in 15 minutes." });
@@ -125,11 +122,7 @@ export const apiLimiter = rateLimit({
   max: 100,
   message: { error: "Too many requests. Please slow down." },
   standardHeaders: true,
-  legacyHeaders: false,
-  keyGenerator: (req) => {
-    const user = (req as any).user;
-    return user?.id || req.ip || 'unknown';
-  }
+  legacyHeaders: false
 });
 
 export const strictLimiter = rateLimit({
@@ -156,6 +149,14 @@ export const checkoutLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 20,
   message: { error: "Too many checkout attempts." },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+export const adminLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  message: { error: "Too many admin requests." },
   standardHeaders: true,
   legacyHeaders: false
 });
@@ -187,9 +188,6 @@ export const sanitizeInput = (req: Request, res: Response, next: NextFunction) =
 
   if (req.body) {
     req.body = sanitize(req.body);
-  }
-  if (req.query) {
-    req.query = sanitize(req.query);
   }
   next();
 };

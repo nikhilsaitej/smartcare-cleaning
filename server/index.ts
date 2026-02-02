@@ -38,31 +38,33 @@ app.use((req, res, next) => {
   }
 });
 
+const isDev = process.env.NODE_ENV !== "production";
+
 app.use(helmet({
-  contentSecurityPolicy: {
+  contentSecurityPolicy: isDev ? false : {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://*.supabase.co"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://*.supabase.co"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       imgSrc: ["'self'", "data:", "https:", "blob:"],
-      connectSrc: ["'self'", "https://*.supabase.co", "wss://*.supabase.co"],
+      connectSrc: ["'self'", "https://*.supabase.co", "wss://*.supabase.co", "ws:"],
       fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
       frameSrc: ["'self'"],
-      formAction: ["'self'"],
-      upgradeInsecureRequests: process.env.NODE_ENV === "production" ? [] : null
+      workerSrc: ["'self'", "blob:"],
+      formAction: ["'self'"]
     },
   },
   crossOriginEmbedderPolicy: false,
-  hsts: {
+  hsts: isDev ? false : {
     maxAge: 31536000,
     includeSubDomains: true,
     preload: true
   },
   referrerPolicy: { policy: "strict-origin-when-cross-origin" },
   xContentTypeOptions: true,
-  xFrameOptions: { action: "deny" },
+  xFrameOptions: { action: "sameorigin" },
   xXssProtection: true
 }));
 
