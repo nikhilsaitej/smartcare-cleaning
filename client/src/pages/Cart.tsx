@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { Link, useLocation } from "wouter";
 import { 
   ShoppingBag, Plus, Minus, CreditCard, MapPin, Clock, 
-  Phone, ChevronRight, Info, CheckCircle2, Percent, Truck, Package
+  Phone, ChevronRight, Info, Percent, Truck, Package, Home
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,6 +20,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
+import AddressModal, { SavedAddress, useAddresses } from "@/components/AddressModal";
 
 export default function Cart() {
   const { items, updateQuantity, subtotal } = useCart();
@@ -28,6 +29,11 @@ export default function Cart() {
   const [avoidCalling, setAvoidCalling] = useState(false);
   const [selectedTip, setSelectedTip] = useState<number | null>(null);
   const [customTip, setCustomTip] = useState("");
+  
+  // Address state
+  const [addressModalOpen, setAddressModalOpen] = useState(false);
+  const [selectedAddress, setSelectedAddress] = useState<SavedAddress | null>(null);
+  const { addresses, saveAddress, deleteAddress } = useAddresses();
   
   // Determine cart type
   const hasServices = useMemo(() => items.some(item => item.category === "Service"), [items]);
@@ -45,13 +51,13 @@ export default function Cart() {
   const frequentlyAdded = useMemo(() => {
     if (hasServices) {
       return [
-        { id: "fa1", name: "Deep Cleaning Add-on", price: 349, image: "" },
-        { id: "fa2", name: "Sanitization Spray", price: 199, image: "" }
+        { id: "fa1", name: "Deep Cleaning Add-on", price: 349 },
+        { id: "fa2", name: "Sanitization Spray", price: 199 }
       ];
     } else {
       return [
-        { id: "fa3", name: "Floor Cleaner 1L", price: 249, image: "" },
-        { id: "fa4", name: "Microfiber Cloth Set", price: 149, image: "" }
+        { id: "fa3", name: "Floor Cleaner 1L", price: 249 },
+        { id: "fa4", name: "Microfiber Cloth Set", price: 149 }
       ];
     }
   }, [hasServices]);
@@ -61,9 +67,12 @@ export default function Cart() {
       setLocation("/login?redirect=/checkout");
       return;
     }
-    // Pass tip info to checkout via query params or context
     const tipParam = tipAmount > 0 ? `?tip=${tipAmount}` : "";
     setLocation(`/checkout${tipParam}`);
+  };
+
+  const handleAddressSelect = (address: SavedAddress) => {
+    setSelectedAddress(address);
   };
 
   if (items.length === 0) {
@@ -127,15 +136,35 @@ export default function Cart() {
                   <Separator />
 
                   {/* Address */}
-                  <div className="p-5 flex items-center gap-4">
-                    <div className="h-8 w-8 bg-gray-100 rounded-full flex items-center justify-center shrink-0">
-                      <MapPin className="h-4 w-4 text-gray-500" />
+                  <div className="p-5">
+                    <div className="flex items-center gap-4">
+                      <div className="h-8 w-8 bg-gray-100 rounded-full flex items-center justify-center shrink-0">
+                        <MapPin className="h-4 w-4 text-gray-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900">Address</p>
+                        {selectedAddress && (
+                          <div className="flex items-center gap-1 mt-0.5">
+                            <Home className="h-3 w-3 text-gray-400" />
+                            <p className="text-sm text-gray-500 truncate">{selectedAddress.fullAddress}</p>
+                          </div>
+                        )}
+                      </div>
+                      {selectedAddress && (
+                        <Button variant="outline" size="sm" onClick={() => setAddressModalOpen(true)} className="shrink-0">
+                          Edit
+                        </Button>
+                      )}
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">Address</p>
-                      <p className="text-sm text-gray-500">Add delivery address</p>
-                    </div>
-                    <Button variant="outline" size="sm" className="shrink-0">Edit</Button>
+                    
+                    {!selectedAddress && (
+                      <Button 
+                        onClick={() => setAddressModalOpen(true)}
+                        className="w-full mt-4 bg-primary hover:bg-primary/90 h-11 font-semibold rounded-lg"
+                      >
+                        Select address
+                      </Button>
+                    )}
                   </div>
 
                   <Separator />
@@ -143,19 +172,19 @@ export default function Cart() {
                   {/* Slot - Only show for services */}
                   {!isProductsOnly && (
                     <>
-                      <div className="p-5 flex items-center gap-4">
-                        <div className="h-8 w-8 bg-gray-100 rounded-full flex items-center justify-center shrink-0">
-                          <Clock className="h-4 w-4 text-gray-500" />
+                      <div className="p-5">
+                        <div className="flex items-center gap-4">
+                          <div className="h-8 w-8 bg-gray-100 rounded-full flex items-center justify-center shrink-0">
+                            <Clock className="h-4 w-4 text-gray-500" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-900">Slot</p>
+                            <p className="text-sm text-gray-500">Select time & date</p>
+                          </div>
                         </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-900">Slot</p>
-                          <p className="text-sm text-gray-500">Select time & date</p>
-                        </div>
-                      </div>
-                      <div className="px-5 pb-5">
                         <Button 
                           onClick={handleProceedToCheckout}
-                          className="w-full bg-violet-600 hover:bg-violet-700 h-11 font-semibold text-white rounded-lg"
+                          className="w-full mt-4 bg-violet-600 hover:bg-violet-700 h-11 font-semibold text-white rounded-lg"
                         >
                           Select time & date
                         </Button>
@@ -195,7 +224,8 @@ export default function Cart() {
                   <div className="px-5 pb-5">
                     <Button 
                       onClick={handleProceedToCheckout}
-                      className="w-full bg-violet-600 hover:bg-violet-700 h-12 font-semibold text-white rounded-lg"
+                      disabled={!selectedAddress}
+                      className="w-full bg-violet-600 hover:bg-violet-700 h-12 font-semibold text-white rounded-lg disabled:opacity-50"
                     >
                       Proceed to {isProductsOnly ? "checkout" : "pay"}
                     </Button>
@@ -206,35 +236,23 @@ export default function Cart() {
                 </CardContent>
               </Card>
 
-              {/* Cancellation Policy - Separate Card */}
-              {!isProductsOnly && (
-                <Card className="border-none shadow-sm mt-4 overflow-hidden">
-                  <CardContent className="p-5">
-                    <h3 className="font-semibold text-gray-900 mb-2">Cancellation policy</h3>
-                    <p className="text-sm text-gray-600 leading-relaxed mb-2">
-                      Free cancellations if done more than 12 hrs before the service or if a professional isn't assigned. A fee will be charged otherwise.
-                    </p>
-                    <button className="text-primary text-sm font-semibold underline hover:no-underline">
-                      Read full policy
-                    </button>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Return Policy - For Products Only */}
-              {isProductsOnly && (
-                <Card className="border-none shadow-sm mt-4 overflow-hidden">
-                  <CardContent className="p-5">
-                    <h3 className="font-semibold text-gray-900 mb-2">Return & Refund Policy</h3>
-                    <p className="text-sm text-gray-600 leading-relaxed mb-2">
-                      Easy 7-day returns on all products. Refund will be processed within 5-7 business days after pickup.
-                    </p>
-                    <button className="text-primary text-sm font-semibold underline hover:no-underline">
-                      Read full policy
-                    </button>
-                  </CardContent>
-                </Card>
-              )}
+              {/* Policy Card */}
+              <Card className="border-none shadow-sm mt-4 overflow-hidden">
+                <CardContent className="p-5">
+                  <h3 className="font-semibold text-gray-900 mb-2">
+                    {isProductsOnly ? "Return & Refund Policy" : "Cancellation policy"}
+                  </h3>
+                  <p className="text-sm text-gray-600 leading-relaxed mb-2">
+                    {isProductsOnly 
+                      ? "Easy 7-day returns on all products. Refund will be processed within 5-7 business days after pickup."
+                      : "Free cancellations if done more than 12 hrs before the service or if a professional isn't assigned. A fee will be charged otherwise."
+                    }
+                  </p>
+                  <button className="text-primary text-sm font-semibold underline hover:no-underline">
+                    Read full policy
+                  </button>
+                </CardContent>
+              </Card>
             </div>
 
             {/* Right Column - Three Separate Cards */}
@@ -301,30 +319,31 @@ export default function Cart() {
                     </div>
                   </div>
 
-                  <Separator />
-
                   {/* Avoid Calling - Only for services */}
                   {!isProductsOnly && (
-                    <div className="p-5">
-                      <div className="flex items-center gap-3">
-                        <Checkbox 
-                          id="avoid-calling" 
-                          checked={avoidCalling} 
-                          onCheckedChange={(checked) => setAvoidCalling(!!checked)} 
-                        />
-                        <Label htmlFor="avoid-calling" className="text-sm text-gray-700 cursor-pointer">
-                          Avoid calling before reaching the location
-                        </Label>
+                    <>
+                      <Separator />
+                      <div className="p-5">
+                        <div className="flex items-center gap-3">
+                          <Checkbox 
+                            id="avoid-calling-cart" 
+                            checked={avoidCalling} 
+                            onCheckedChange={(checked) => setAvoidCalling(!!checked)} 
+                          />
+                          <Label htmlFor="avoid-calling-cart" className="text-sm text-gray-700 cursor-pointer">
+                            Avoid calling before reaching the location
+                          </Label>
+                        </div>
                       </div>
-                    </div>
+                    </>
                   )}
                 </CardContent>
               </Card>
 
               {/* Card 2: Coupons */}
-              <Card className="border-none shadow-lg overflow-hidden">
+              <Card className="border-none shadow-lg overflow-hidden cursor-pointer hover:shadow-xl transition-shadow">
                 <CardContent className="p-5">
-                  <div className="flex items-center justify-between cursor-pointer">
+                  <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <Percent className="h-5 w-5 text-green-600" />
                       <span className="font-semibold text-gray-900">Coupons and offers</span>
@@ -407,15 +426,13 @@ export default function Cart() {
                               )}
                             </button>
                           ))}
-                          <div className="relative">
-                            <Input
-                              type="number"
-                              placeholder="Custom"
-                              value={customTip}
-                              onChange={(e) => { setCustomTip(e.target.value); setSelectedTip(-1); }}
-                              className={`w-20 h-10 text-sm text-center ${selectedTip === -1 ? 'border-gray-900' : ''}`}
-                            />
-                          </div>
+                          <Input
+                            type="number"
+                            placeholder="Custom"
+                            value={customTip}
+                            onChange={(e) => { setCustomTip(e.target.value); setSelectedTip(-1); }}
+                            className={`w-20 h-10 text-sm text-center ${selectedTip === -1 && customTip ? 'border-gray-900' : ''}`}
+                          />
                         </div>
                         <p className="text-xs text-gray-500 mt-4">100% of the tip goes to the professional.</p>
                       </div>
@@ -441,6 +458,16 @@ export default function Cart() {
         </div>
       </main>
       <Footer />
+
+      {/* Address Modal */}
+      <AddressModal
+        open={addressModalOpen}
+        onOpenChange={setAddressModalOpen}
+        onAddressSelect={handleAddressSelect}
+        savedAddresses={addresses}
+        onSaveAddress={saveAddress}
+        onDeleteAddress={deleteAddress}
+      />
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Plus, Minus, CreditCard, MapPin, Clock, ChevronRight, Info,
-  Phone, Loader2, X, Search, Percent, Package, Truck
+  Phone, Loader2, X, Search, Percent, Package, Truck, Home
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,6 +28,7 @@ import Footer from "@/components/layout/Footer";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import AddressModal, { SavedAddress, useAddresses } from "@/components/AddressModal";
 
 export default function CheckoutPage() {
   const { items, updateQuantity, subtotal, clearCart } = useCart();
@@ -36,9 +37,11 @@ export default function CheckoutPage() {
   const { toast } = useToast();
   
   const [loading, setLoading] = useState(false);
-  const [address, setAddress] = useState("");
-  const [addressSaved, setAddressSaved] = useState(false);
-  const [editingAddress, setEditingAddress] = useState(false);
+  
+  // Address state
+  const [addressModalOpen, setAddressModalOpen] = useState(false);
+  const [selectedAddress, setSelectedAddress] = useState<SavedAddress | null>(null);
+  const { addresses, saveAddress, deleteAddress } = useAddresses();
   
   // Slot Selection State
   const [slotModalOpen, setSlotModalOpen] = useState(false);
@@ -71,6 +74,13 @@ export default function CheckoutPage() {
       }
     }
   }, []);
+
+  // Load first address if available
+  useEffect(() => {
+    if (addresses.length > 0 && !selectedAddress) {
+      setSelectedAddress(addresses[0]);
+    }
+  }, [addresses, selectedAddress]);
 
   // Determine cart type
   const hasServices = useMemo(() => items.some(item => item.category === "Service"), [items]);
@@ -156,19 +166,13 @@ export default function CheckoutPage() {
     }
   };
 
-  const handleSaveAddress = () => {
-    if (address.trim().length > 10) {
-      setAddressSaved(true);
-      setEditingAddress(false);
-      toast({ title: "Address Saved", description: "Your delivery address has been saved." });
-    } else {
-      toast({ title: "Invalid Address", description: "Please enter a complete address.", variant: "destructive" });
-    }
+  const handleAddressSelect = (address: SavedAddress) => {
+    setSelectedAddress(address);
   };
 
   const handleCheckout = async () => {
-    if (!addressSaved) {
-      toast({ title: "Address Required", description: "Please save your delivery address.", variant: "destructive" });
+    if (!selectedAddress) {
+      toast({ title: "Address Required", description: "Please select a delivery address.", variant: "destructive" });
       return;
     }
     if (!isProductsOnly && (!selectedDate || !selectedTime)) {
@@ -203,6 +207,8 @@ export default function CheckoutPage() {
             price: item.price
           })),
           tip: tipAmount,
+          address: selectedAddress,
+          slot: !isProductsOnly ? { date: selectedDate, time: selectedTime } : null,
           idempotencyKey: `checkout_${Date.now()}_${user?.id}`
         })
       });
@@ -255,7 +261,7 @@ export default function CheckoutPage() {
   };
 
   const dates = getNextDates();
-  const canProceed = addressSaved && (isProductsOnly || (selectedDate && selectedTime));
+  const canProceed = selectedAddress && (isProductsOnly || (selectedDate && selectedTime));
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -293,32 +299,27 @@ export default function CheckoutPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900">Address</p>
-                        {addressSaved && !editingAddress && (
-                          <p className="text-sm text-gray-500 truncate">{address}</p>
+                        {selectedAddress && (
+                          <div className="flex items-center gap-1 mt-0.5">
+                            <Home className="h-3 w-3 text-gray-400" />
+                            <p className="text-sm text-gray-500 truncate">{selectedAddress.fullAddress}</p>
+                          </div>
                         )}
                       </div>
-                      {addressSaved && !editingAddress && (
-                        <Button variant="outline" size="sm" onClick={() => setEditingAddress(true)} className="shrink-0">
+                      {selectedAddress && (
+                        <Button variant="outline" size="sm" onClick={() => setAddressModalOpen(true)} className="shrink-0">
                           Edit
                         </Button>
                       )}
                     </div>
                     
-                    {(!addressSaved || editingAddress) && (
-                      <div className="mt-4 space-y-3">
-                        <Input
-                          placeholder="House No, Building, Street, Area, Vijayawada..."
-                          value={address}
-                          onChange={(e) => setAddress(e.target.value)}
-                          className="bg-gray-50"
-                        />
-                        <Button 
-                          onClick={handleSaveAddress}
-                          className="w-full bg-primary hover:bg-primary/90 h-11 font-semibold rounded-lg"
-                        >
-                          Save Address
-                        </Button>
-                      </div>
+                    {!selectedAddress && (
+                      <Button 
+                        onClick={() => setAddressModalOpen(true)}
+                        className="w-full mt-4 bg-primary hover:bg-primary/90 h-11 font-semibold rounded-lg"
+                      >
+                        Select address
+                      </Button>
                     )}
                   </div>
 
@@ -626,6 +627,16 @@ export default function CheckoutPage() {
         </div>
       </main>
       <Footer />
+
+      {/* Address Modal */}
+      <AddressModal
+        open={addressModalOpen}
+        onOpenChange={setAddressModalOpen}
+        onAddressSelect={handleAddressSelect}
+        savedAddresses={addresses}
+        onSaveAddress={saveAddress}
+        onDeleteAddress={deleteAddress}
+      />
 
       {/* Slot Selection Modal */}
       <Dialog open={slotModalOpen} onOpenChange={setSlotModalOpen}>
