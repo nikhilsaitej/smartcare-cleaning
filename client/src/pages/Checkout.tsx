@@ -1,10 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Plus, Minus, CreditCard, MapPin, Clock, ChevronRight, Info,
-  CheckCircle2, Phone, Loader2, Shield, X, Search, Percent,
-  Lock, ChevronDown, Edit2, Calendar
+  Phone, Loader2, X, Search, Percent, Package, Truck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -33,7 +32,7 @@ import { useToast } from "@/hooks/use-toast";
 export default function CheckoutPage() {
   const { items, updateQuantity, subtotal, clearCart } = useCart();
   const { user, session } = useAuth();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const { toast } = useToast();
   
   const [loading, setLoading] = useState(false);
@@ -54,10 +53,59 @@ export default function CheckoutPage() {
   const [couponModalOpen, setCouponModalOpen] = useState(false);
   const [avoidCalling, setAvoidCalling] = useState(false);
 
+  // Tip State
+  const [selectedTip, setSelectedTip] = useState<number | null>(null);
+  const [customTip, setCustomTip] = useState("");
+
+  // Get tip from URL if passed from cart
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tipParam = params.get("tip");
+    if (tipParam) {
+      const tipValue = parseInt(tipParam);
+      if ([50, 75, 100].includes(tipValue)) {
+        setSelectedTip(tipValue);
+      } else if (tipValue > 0) {
+        setSelectedTip(-1);
+        setCustomTip(tipValue.toString());
+      }
+    }
+  }, []);
+
+  // Determine cart type
+  const hasServices = useMemo(() => items.some(item => item.category === "Service"), [items]);
+  const hasProducts = useMemo(() => items.some(item => item.category !== "Service"), [items]);
+  const isProductsOnly = hasProducts && !hasServices;
+
+  // Calculate totals
+  const tipAmount = selectedTip === -1 ? (parseInt(customTip) || 0) : (selectedTip || 0);
   const taxes = Math.round(subtotal * 0.05);
   const platformFee = 10;
-  const deliveryFee = subtotal > 1000 ? 0 : 50;
-  const totalAmount = subtotal + taxes + platformFee + deliveryFee;
+  const deliveryFee = subtotal > 1000 ? 0 : (isProductsOnly ? 40 : 50);
+  const totalAmount = subtotal + taxes + platformFee + deliveryFee + tipAmount;
+
+  // Frequently added items based on cart content
+  const frequentlyAdded = useMemo(() => {
+    if (hasServices) {
+      return [
+        { id: "fa1", name: "Deep Cleaning Add-on", price: 349 },
+        { id: "fa2", name: "Sanitization Spray", price: 199 }
+      ];
+    } else {
+      return [
+        { id: "fa3", name: "Floor Cleaner 1L", price: 249 },
+        { id: "fa4", name: "Microfiber Cloth Set", price: 149 }
+      ];
+    }
+  }, [hasServices]);
+
+  const coupons = [
+    { code: "FIRST50", discount: "50% off", description: "For first-time users", maxDiscount: "₹100" },
+    { code: "CLEAN20", discount: "20% off", description: "On all services", maxDiscount: "₹200" },
+    { code: "SMART100", discount: "₹100 off", description: "On orders above ₹999", maxDiscount: "₹100" },
+    { code: "WEEKEND", discount: "15% off", description: "Weekend special", maxDiscount: "₹150" },
+    { code: "REFER10", discount: "₹50 off", description: "Referral discount", maxDiscount: "₹50" },
+  ];
 
   useEffect(() => {
     if (items.length === 0) {
@@ -91,20 +139,10 @@ export default function CheckoutPage() {
     "03:30 PM", "04:00 PM"
   ];
 
-  const coupons = [
-    { code: "FIRST50", discount: "50% off", description: "For first-time users", maxDiscount: "₹100" },
-    { code: "CLEAN20", discount: "20% off", description: "On all services", maxDiscount: "₹200" },
-    { code: "SMART100", discount: "₹100 off", description: "On orders above ₹999", maxDiscount: "₹100" },
-    { code: "WEEKEND", discount: "15% off", description: "Weekend special", maxDiscount: "₹150" },
-    { code: "REFER10", discount: "₹50 off", description: "Referral discount", maxDiscount: "₹50" },
-  ];
-
   const handleOpenSlotModal = () => {
     setSlotModalOpen(true);
     setLoadingSlots(true);
     setSlotsLoaded(false);
-    
-    // Simulate loading slots
     setTimeout(() => {
       setLoadingSlots(false);
       setSlotsLoaded(true);
@@ -133,7 +171,7 @@ export default function CheckoutPage() {
       toast({ title: "Address Required", description: "Please save your delivery address.", variant: "destructive" });
       return;
     }
-    if (!selectedDate || !selectedTime) {
+    if (!isProductsOnly && (!selectedDate || !selectedTime)) {
       toast({ title: "Slot Required", description: "Please select a time slot.", variant: "destructive" });
       return;
     }
@@ -164,6 +202,7 @@ export default function CheckoutPage() {
             quantity: item.quantity,
             price: item.price
           })),
+          tip: tipAmount,
           idempotencyKey: `checkout_${Date.now()}_${user?.id}`
         })
       });
@@ -175,7 +214,7 @@ export default function CheckoutPage() {
         amount: orderData.amount,
         currency: orderData.currency,
         name: "SmartCare Cleaning",
-        description: "Professional Cleaning Services",
+        description: isProductsOnly ? "Product Order" : "Professional Cleaning Services",
         order_id: orderData.orderId,
         handler: async (response: any) => {
           const verifyRes = await fetch("/api/payment/verify", {
@@ -216,25 +255,26 @@ export default function CheckoutPage() {
   };
 
   const dates = getNextDates();
+  const canProceed = addressSaved && (isProductsOnly || (selectedDate && selectedTime));
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       <main className="pt-24 pb-20">
         <div className="container mx-auto px-4 max-w-6xl">
-          {/* Header */}
-          <div className="mb-6">
+          <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-bold text-gray-900">Checkout</h1>
+            <Badge variant="secondary" className="text-sm">{items.length} {items.length === 1 ? 'item' : 'items'}</Badge>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Left Column */}
-            <div className="lg:col-span-7 space-y-3">
-              {/* Contact Info */}
-              <Card className="border border-gray-100 shadow-sm rounded-xl overflow-hidden">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-4">
-                    <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+            {/* Left Column - Single Card */}
+            <div className="lg:col-span-7">
+              <Card className="border-none shadow-lg overflow-hidden">
+                <CardContent className="p-0">
+                  {/* Contact Info */}
+                  <div className="p-5 flex items-center gap-4">
+                    <div className="h-8 w-8 bg-gray-100 rounded-full flex items-center justify-center shrink-0">
                       <MapPin className="h-4 w-4 text-gray-500" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -242,133 +282,166 @@ export default function CheckoutPage() {
                       <p className="text-sm text-gray-500 truncate">{user?.email || user?.phone || "+91 XXXXXXXXXX"}</p>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
 
-              {/* Address */}
-              <Card className="border border-gray-100 shadow-sm rounded-xl overflow-hidden">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-4">
-                    <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
-                      <MapPin className="h-4 w-4 text-gray-500" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900">Address</p>
-                      {addressSaved && !editingAddress ? (
-                        <p className="text-sm text-gray-500 truncate">{address}</p>
-                      ) : null}
-                    </div>
-                    {addressSaved && !editingAddress && (
-                      <Button variant="outline" size="sm" onClick={() => setEditingAddress(true)} className="shrink-0">
-                        Edit
-                      </Button>
-                    )}
-                  </div>
-                  
-                  {(!addressSaved || editingAddress) && (
-                    <div className="mt-4 space-y-3">
-                      <Input
-                        placeholder="House No, Building, Street, Area, Vijayawada..."
-                        value={address}
-                        onChange={(e) => setAddress(e.target.value)}
-                        className="bg-gray-50"
-                      />
-                      <Button 
-                        onClick={handleSaveAddress}
-                        className="w-full bg-primary hover:bg-primary/90 h-11 font-semibold rounded-lg"
-                      >
-                        Save Address
-                      </Button>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                  <Separator />
 
-              {/* Time Slot */}
-              <Card className="border border-gray-100 shadow-sm rounded-xl overflow-hidden">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-4">
-                    <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
-                      <Clock className="h-4 w-4 text-gray-500" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900">Slot</p>
-                      {selectedDate && selectedTime && (
-                        <p className="text-sm text-gray-500">{selectedDate} - {selectedTime}</p>
+                  {/* Address */}
+                  <div className="p-5">
+                    <div className="flex items-center gap-4">
+                      <div className="h-8 w-8 bg-gray-100 rounded-full flex items-center justify-center shrink-0">
+                        <MapPin className="h-4 w-4 text-gray-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900">Address</p>
+                        {addressSaved && !editingAddress && (
+                          <p className="text-sm text-gray-500 truncate">{address}</p>
+                        )}
+                      </div>
+                      {addressSaved && !editingAddress && (
+                        <Button variant="outline" size="sm" onClick={() => setEditingAddress(true)} className="shrink-0">
+                          Edit
+                        </Button>
                       )}
                     </div>
-                    {selectedDate && selectedTime && (
-                      <Button variant="outline" size="sm" onClick={handleOpenSlotModal} className="shrink-0">
-                        Edit
-                      </Button>
+                    
+                    {(!addressSaved || editingAddress) && (
+                      <div className="mt-4 space-y-3">
+                        <Input
+                          placeholder="House No, Building, Street, Area, Vijayawada..."
+                          value={address}
+                          onChange={(e) => setAddress(e.target.value)}
+                          className="bg-gray-50"
+                        />
+                        <Button 
+                          onClick={handleSaveAddress}
+                          className="w-full bg-primary hover:bg-primary/90 h-11 font-semibold rounded-lg"
+                        >
+                          Save Address
+                        </Button>
+                      </div>
                     )}
                   </div>
-                  
-                  {(!selectedDate || !selectedTime) && (
-                    <Button 
-                      onClick={handleOpenSlotModal}
-                      className="w-full mt-4 bg-violet-600 hover:bg-violet-700 h-11 font-semibold rounded-lg"
-                    >
-                      Select time & date
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
 
-              {/* Payment Method */}
-              <Card className="border border-gray-100 shadow-sm rounded-xl overflow-hidden">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-4">
-                    <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                  <Separator />
+
+                  {/* Slot - Only for services */}
+                  {!isProductsOnly && (
+                    <>
+                      <div className="p-5">
+                        <div className="flex items-center gap-4">
+                          <div className="h-8 w-8 bg-gray-100 rounded-full flex items-center justify-center shrink-0">
+                            <Clock className="h-4 w-4 text-gray-500" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-900">Slot</p>
+                            {selectedDate && selectedTime && (
+                              <p className="text-sm text-gray-500">{selectedDate} - {selectedTime}</p>
+                            )}
+                          </div>
+                          {selectedDate && selectedTime && (
+                            <Button variant="outline" size="sm" onClick={handleOpenSlotModal} className="shrink-0">
+                              Edit
+                            </Button>
+                          )}
+                        </div>
+                        
+                        {(!selectedDate || !selectedTime) && (
+                          <Button 
+                            onClick={handleOpenSlotModal}
+                            className="w-full mt-4 bg-violet-600 hover:bg-violet-700 h-11 font-semibold text-white rounded-lg"
+                          >
+                            Select time & date
+                          </Button>
+                        )}
+                      </div>
+                      <Separator />
+                    </>
+                  )}
+
+                  {/* Delivery Info - Only for products */}
+                  {isProductsOnly && (
+                    <>
+                      <div className="p-5 flex items-center gap-4">
+                        <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center shrink-0">
+                          <Truck className="h-4 w-4 text-green-600" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-900">Delivery</p>
+                          <p className="text-sm text-green-600">Expected in 2-3 business days</p>
+                        </div>
+                      </div>
+                      <Separator />
+                    </>
+                  )}
+
+                  {/* Payment Method */}
+                  <div className="p-5 flex items-center gap-4">
+                    <div className="h-8 w-8 bg-gray-100 rounded-full flex items-center justify-center shrink-0">
                       <CreditCard className="h-4 w-4 text-gray-500" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">Payment Method</p>
+                      <p className="text-sm font-medium text-gray-400">Payment Method</p>
                     </div>
                   </div>
-                  
-                  <Button 
-                    onClick={handleCheckout}
-                    disabled={loading || !addressSaved || !selectedDate || !selectedTime}
-                    className="w-full mt-4 bg-violet-600 hover:bg-violet-700 h-12 font-semibold rounded-lg disabled:opacity-50"
-                  >
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Proceed to pay"}
-                  </Button>
-                  
-                  <p className="text-xs text-center text-gray-500 mt-3">
-                    By proceeding, you agree to our{" "}
-                    <button onClick={() => setPolicyModalOpen(true)} className="underline hover:text-primary">T&C</button>,{" "}
-                    <button onClick={() => setPolicyModalOpen(true)} className="underline hover:text-primary">Privacy</button> and{" "}
-                    <button onClick={() => setPolicyModalOpen(true)} className="underline hover:text-primary">Cancellation Policy</button>.
-                  </p>
+
+                  {/* Proceed Button */}
+                  <div className="px-5 pb-5">
+                    <Button 
+                      onClick={handleCheckout}
+                      disabled={loading || !canProceed}
+                      className="w-full bg-violet-600 hover:bg-violet-700 h-12 font-semibold text-white rounded-lg disabled:opacity-50"
+                    >
+                      {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Proceed to pay"}
+                    </Button>
+                    <p className="text-xs text-center text-gray-500 mt-3">
+                      By proceeding, you agree to our{" "}
+                      <button onClick={() => setPolicyModalOpen(true)} className="underline">T&C</button>,{" "}
+                      <button onClick={() => setPolicyModalOpen(true)} className="underline">Privacy</button> and{" "}
+                      <button onClick={() => setPolicyModalOpen(true)} className="underline">Cancellation Policy</button>.
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
 
-              {/* Cancellation Policy */}
-              <div className="p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
-                <h3 className="font-semibold text-gray-900 mb-2">Cancellation policy</h3>
-                <p className="text-sm text-gray-600 leading-relaxed mb-2">
-                  Free cancellations if done more than 12 hrs before the service or if a professional isn't assigned. A fee will be charged otherwise.
-                </p>
-                <button 
-                  onClick={() => setPolicyModalOpen(true)}
-                  className="text-primary text-sm font-semibold underline hover:no-underline"
-                >
-                  Read full policy
-                </button>
-              </div>
+              {/* Policy Card */}
+              <Card className="border-none shadow-sm mt-4 overflow-hidden">
+                <CardContent className="p-5">
+                  <h3 className="font-semibold text-gray-900 mb-2">
+                    {isProductsOnly ? "Return & Refund Policy" : "Cancellation policy"}
+                  </h3>
+                  <p className="text-sm text-gray-600 leading-relaxed mb-2">
+                    {isProductsOnly 
+                      ? "Easy 7-day returns on all products. Refund will be processed within 5-7 business days after pickup."
+                      : "Free cancellations if done more than 12 hrs before the service or if a professional isn't assigned. A fee will be charged otherwise."
+                    }
+                  </p>
+                  <button 
+                    onClick={() => setPolicyModalOpen(true)}
+                    className="text-primary text-sm font-semibold underline hover:no-underline"
+                  >
+                    Read full policy
+                  </button>
+                </CardContent>
+              </Card>
             </div>
 
-            {/* Right Column - Order Summary */}
-            <div className="lg:col-span-5">
-              <Card className="border border-gray-100 shadow-lg rounded-xl sticky top-24 overflow-hidden">
+            {/* Right Column - Three Cards */}
+            <div className="lg:col-span-5 space-y-4">
+              {/* Card 1: Items + Frequently Added */}
+              <Card className="border-none shadow-lg overflow-hidden">
                 <CardContent className="p-0">
-                  {/* Items */}
-                  <div className="max-h-[280px] overflow-y-auto divide-y divide-gray-100">
+                  <div className="p-5 space-y-4 max-h-[280px] overflow-y-auto">
                     {items.map((item) => (
-                      <div key={item.id} className="p-4 flex gap-4">
+                      <div key={item.id} className="flex items-start gap-3">
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-gray-900">{item.title}</p>
+                          <div className="flex items-center gap-2">
+                            {item.category === "Service" ? (
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-violet-200 text-violet-600">Service</Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-blue-200 text-blue-600">Product</Badge>
+                            )}
+                          </div>
+                          <p className="font-semibold text-gray-900 leading-tight mt-1">{item.title}</p>
                           <div className="flex items-center gap-3 mt-2">
                             <div className="inline-flex items-center border border-violet-500 rounded-md overflow-hidden">
                               <button 
@@ -389,31 +462,24 @@ export default function CheckoutPage() {
                             </div>
                           </div>
                         </div>
-                        <div className="text-right shrink-0">
-                          <p className="font-semibold text-gray-900">₹{item.price * item.quantity}</p>
-                          {item.originalPrice && item.originalPrice > item.price && (
-                            <p className="text-xs text-gray-400 line-through">₹{item.originalPrice * item.quantity}</p>
-                          )}
-                        </div>
+                        <p className="font-bold text-gray-900 shrink-0">₹{item.price * item.quantity}</p>
                       </div>
                     ))}
                   </div>
 
                   <Separator />
 
-                  {/* Frequently Added */}
-                  <div className="p-4 bg-gray-50/50">
-                    <p className="text-sm font-medium text-gray-700 mb-3">Frequently added together</p>
-                    <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
-                      {[
-                        { name: "Deep Clean Add-on", price: 349 },
-                        { name: "Sanitization", price: 199 }
-                      ].map((item, idx) => (
-                        <div key={idx} className="shrink-0 flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-lg min-w-[180px]">
-                          <div className="h-10 w-10 bg-gray-100 rounded-lg"></div>
+                  <div className="p-5 bg-gray-50/50">
+                    <p className="text-sm font-semibold text-gray-700 mb-3">Frequently added together</p>
+                    <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                      {frequentlyAdded.map((item) => (
+                        <div key={item.id} className="shrink-0 flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-xl min-w-[180px]">
+                          <div className="h-10 w-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                            <Package className="h-5 w-5 text-gray-400" />
+                          </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium truncate">{item.name}</p>
-                            <p className="text-sm font-semibold text-primary">₹{item.price}</p>
+                            <p className="text-sm font-bold text-primary">₹{item.price}</p>
                           </div>
                           <button className="text-violet-600 text-sm font-semibold">Add</button>
                         </div>
@@ -421,44 +487,47 @@ export default function CheckoutPage() {
                     </div>
                   </div>
 
-                  <Separator />
+                  {!isProductsOnly && (
+                    <>
+                      <Separator />
+                      <div className="p-5">
+                        <div className="flex items-center gap-3">
+                          <Checkbox 
+                            id="avoid-calling-checkout" 
+                            checked={avoidCalling} 
+                            onCheckedChange={(checked) => setAvoidCalling(!!checked)} 
+                          />
+                          <Label htmlFor="avoid-calling-checkout" className="text-sm text-gray-700 cursor-pointer">
+                            Avoid calling before reaching the location
+                          </Label>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
 
-                  {/* Avoid Calling */}
-                  <div className="p-4">
-                    <div className="flex items-center gap-3">
-                      <Checkbox 
-                        id="avoid-call" 
-                        checked={avoidCalling} 
-                        onCheckedChange={(c) => setAvoidCalling(!!c)} 
-                      />
-                      <Label htmlFor="avoid-call" className="text-sm text-gray-700 cursor-pointer">
-                        Avoid calling before reaching the location
-                      </Label>
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  {/* Coupons */}
-                  <div 
-                    className="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
-                    onClick={() => setCouponModalOpen(true)}
-                  >
+              {/* Card 2: Coupons */}
+              <Card className="border-none shadow-lg overflow-hidden cursor-pointer hover:shadow-xl transition-shadow" onClick={() => setCouponModalOpen(true)}>
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <Percent className="h-5 w-5 text-green-600" />
-                      <span className="font-medium text-gray-900">Coupons and offers</span>
+                      <span className="font-semibold text-gray-900">Coupons and offers</span>
                     </div>
-                    <span className="text-violet-600 text-sm font-semibold">{coupons.length} offers &gt;</span>
+                    <span className="text-violet-600 font-semibold text-sm">{coupons.length} offers &gt;</span>
                   </div>
+                </CardContent>
+              </Card>
 
-                  <Separator />
-
-                  {/* Payment Summary */}
-                  <div className="p-4 space-y-3">
-                    <h3 className="font-semibold text-gray-900">Payment summary</h3>
+              {/* Card 3: Payment Summary + Tip */}
+              <Card className="border-none shadow-lg overflow-hidden">
+                <CardContent className="p-0">
+                  <div className="p-5 space-y-3">
+                    <h3 className="font-bold text-gray-900">Payment summary</h3>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Item total</span>
-                      <span className="font-medium text-gray-900">₹{subtotal}</span>
+                      <span className="font-medium">₹{subtotal}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600 flex items-center gap-1">
@@ -473,34 +542,72 @@ export default function CheckoutPage() {
                           </TooltipContent>
                         </Tooltip>
                       </span>
-                      <span className="font-medium text-gray-900">₹{taxes + platformFee}</span>
+                      <span className="font-medium">₹{taxes + platformFee}</span>
                     </div>
-                    {deliveryFee > 0 ? (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Delivery</span>
+                      <span className={deliveryFee === 0 ? "font-medium text-green-600" : "font-medium"}>
+                        {deliveryFee === 0 ? "FREE" : `₹${deliveryFee}`}
+                      </span>
+                    </div>
+                    {tipAmount > 0 && (
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Delivery</span>
-                        <span className="font-medium text-gray-900">₹{deliveryFee}</span>
-                      </div>
-                    ) : (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Delivery</span>
-                        <span className="font-medium text-green-600">FREE</span>
+                        <span className="text-gray-600">Tip for professional</span>
+                        <span className="font-medium text-green-600">₹{tipAmount}</span>
                       </div>
                     )}
                     <Separator className="my-2" />
-                    <div className="flex justify-between">
-                      <span className="font-semibold text-gray-900">Total amount</span>
-                      <span className="font-semibold text-gray-900">₹{totalAmount}</span>
+                    <div className="flex justify-between font-bold text-gray-900">
+                      <span>Total amount</span>
+                      <span>₹{totalAmount}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="font-semibold text-gray-900">Amount to pay</span>
-                      <span className="font-semibold text-gray-900">₹{totalAmount}</span>
+                    <div className="flex justify-between font-bold text-gray-900">
+                      <span>Amount to pay</span>
+                      <span>₹{totalAmount}</span>
                     </div>
                   </div>
 
+                  {/* Tip Section - Only for services */}
+                  {!isProductsOnly && (
+                    <>
+                      <Separator />
+                      <div className="p-5">
+                        <p className="font-medium text-gray-900 mb-3">Add a tip to thank the Professional</p>
+                        <div className="flex gap-2 flex-wrap">
+                          {[50, 75, 100].map((amount) => (
+                            <button
+                              key={amount}
+                              onClick={() => { setSelectedTip(amount); setCustomTip(""); }}
+                              className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all relative ${
+                                selectedTip === amount 
+                                  ? 'border-gray-900 bg-gray-900 text-white' 
+                                  : 'border-gray-200 bg-white hover:border-gray-300 text-gray-700'
+                              }`}
+                            >
+                              ₹{amount}
+                              {amount === 75 && (
+                                <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[10px] text-green-600 font-bold">
+                                  POPULAR
+                                </span>
+                              )}
+                            </button>
+                          ))}
+                          <Input
+                            type="number"
+                            placeholder="Custom"
+                            value={customTip}
+                            onChange={(e) => { setCustomTip(e.target.value); setSelectedTip(-1); }}
+                            className={`w-20 h-10 text-sm text-center ${selectedTip === -1 && customTip ? 'border-gray-900' : ''}`}
+                          />
+                        </div>
+                        <p className="text-xs text-gray-500 mt-4">100% of the tip goes to the professional.</p>
+                      </div>
+                    </>
+                  )}
+
                   <Separator />
 
-                  {/* Final Amount */}
-                  <div className="p-4 flex items-center justify-between">
+                  <div className="p-5 flex items-center justify-between bg-gray-50/50">
                     <div>
                       <p className="text-sm text-gray-500">Amount to pay</p>
                       <p className="text-2xl font-bold text-gray-900">₹{totalAmount}</p>
@@ -550,7 +657,6 @@ export default function CheckoutPage() {
                   <p className="text-sm text-gray-500">Service will take approx. 1 hr & 50 mins</p>
                 </DialogHeader>
 
-                {/* Date Selection */}
                 <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
                   {dates.slice(0, 5).map((date) => (
                     <button
@@ -575,7 +681,6 @@ export default function CheckoutPage() {
 
                 <h4 className="font-semibold text-gray-900 mb-3">Select start time of service</h4>
 
-                {/* Time Slots Grid */}
                 <div className="grid grid-cols-3 gap-2 max-h-[250px] overflow-y-auto mb-6">
                   {timeSlots.map((slot, idx) => (
                     <button
@@ -614,25 +719,44 @@ export default function CheckoutPage() {
       <Dialog open={policyModalOpen} onOpenChange={setPolicyModalOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Cancellation & Refund Policy</DialogTitle>
+            <DialogTitle>{isProductsOnly ? "Return & Refund Policy" : "Cancellation & Refund Policy"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 text-sm text-gray-600">
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-1">Free Cancellation</h4>
-              <p>Cancel for free if done more than 12 hours before the scheduled service time.</p>
-            </div>
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-1">Partial Refund</h4>
-              <p>Cancellations made 2-12 hours before service: 50% refund.</p>
-            </div>
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-1">No Refund</h4>
-              <p>Cancellations made less than 2 hours before service are non-refundable.</p>
-            </div>
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-1">Professional Not Assigned</h4>
-              <p>Full refund if we're unable to assign a professional for your service.</p>
-            </div>
+            {isProductsOnly ? (
+              <>
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-1">7-Day Easy Returns</h4>
+                  <p>Return any product within 7 days of delivery for a full refund.</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-1">Refund Processing</h4>
+                  <p>Refunds are processed within 5-7 business days after product pickup.</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-1">Condition</h4>
+                  <p>Products must be unused and in original packaging with all tags attached.</p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-1">Free Cancellation</h4>
+                  <p>Cancel for free if done more than 12 hours before the scheduled service time.</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-1">Partial Refund</h4>
+                  <p>Cancellations made 2-12 hours before service: 50% refund.</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-1">No Refund</h4>
+                  <p>Cancellations made less than 2 hours before service are non-refundable.</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-1">Professional Not Assigned</h4>
+                  <p>Full refund if we're unable to assign a professional for your service.</p>
+                </div>
+              </>
+            )}
           </div>
         </DialogContent>
       </Dialog>
@@ -669,6 +793,12 @@ export default function CheckoutPage() {
                 {deliveryFee === 0 ? "FREE" : `₹${deliveryFee}`}
               </span>
             </div>
+            {tipAmount > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Tip</span>
+                <span className="font-medium text-green-600">₹{tipAmount}</span>
+              </div>
+            )}
             <Separator />
             <div className="flex justify-between font-semibold">
               <span>Total</span>
