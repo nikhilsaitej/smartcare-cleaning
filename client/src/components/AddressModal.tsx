@@ -618,7 +618,7 @@ export default function AddressModal({
                     House / Flat No. <span className="text-red-500">*</span>
                   </Label>
                   <Input
-                    placeholder="e.g., 409, Flat 2B"
+                    placeholder="e.g., Door No. 12-34"
                     value={formData.houseNo}
                     onChange={(e) => setFormData(prev => ({ ...prev, houseNo: e.target.value }))}
                     className="h-11 bg-gray-50"
@@ -629,7 +629,7 @@ export default function AddressModal({
                 <div>
                   <Label className="text-sm font-semibold text-gray-700 mb-2 block">Building / Apartment Name</Label>
                   <Input
-                    placeholder="e.g., Green Space Enclave"
+                    placeholder="e.g., Sunshine Apartments"
                     value={formData.buildingName}
                     onChange={(e) => setFormData(prev => ({ ...prev, buildingName: e.target.value }))}
                     className="h-11 bg-gray-50"
@@ -640,7 +640,7 @@ export default function AddressModal({
                 <div>
                   <Label className="text-sm font-semibold text-gray-700 mb-2 block">Street / Road</Label>
                   <Input
-                    placeholder="e.g., Srinivasanagar Road"
+                    placeholder="e.g., MG Road"
                     value={formData.street}
                     onChange={(e) => setFormData(prev => ({ ...prev, street: e.target.value }))}
                     className="h-11 bg-gray-50"
@@ -653,7 +653,7 @@ export default function AddressModal({
                     Area / Colony <span className="text-red-500">*</span>
                   </Label>
                   <Input
-                    placeholder="e.g., Srinivasa Nagar Colony"
+                    placeholder="e.g., Benz Circle"
                     value={formData.area}
                     onChange={(e) => setFormData(prev => ({ ...prev, area: e.target.value }))}
                     className="h-11 bg-gray-50"
