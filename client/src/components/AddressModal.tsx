@@ -22,7 +22,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Loader } from "@googlemaps/js-api-loader";
 
 export interface SavedAddress {
   id: string;
@@ -126,22 +125,32 @@ export default function AddressModal({
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const loader = new Loader({
-      apiKey: (window as any).ENV?.GOOGLE_MAPS_API_KEY || "",
-      version: "weekly",
-      libraries: ["places"]
-    });
+    const loadGoogleMaps = async () => {
+      const apiKey = (window as any).ENV?.GOOGLE_MAPS_API_KEY;
+      if (!apiKey) return;
 
-    loader.load().then(() => {
+      if ((window as any).google) {
+        initServices();
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+      script.async = true;
+      script.defer = true;
+      script.onload = () => initServices();
+      document.head.appendChild(script);
+    };
+
+    const initServices = () => {
       setGoogleLoaded(true);
       autocompleteService.current = new (window as any).google.maps.places.AutocompleteService();
       geocoder.current = new (window as any).google.maps.Geocoder();
-      // Dummy element for PlacesService
       const dummy = document.createElement("div");
       placesService.current = new (window as any).google.maps.places.PlacesService(dummy);
-    }).catch(e => {
-      console.error("Google Maps failed to load", e);
-    });
+    };
+
+    loadGoogleMaps();
   }, []);
 
   useEffect(() => {
