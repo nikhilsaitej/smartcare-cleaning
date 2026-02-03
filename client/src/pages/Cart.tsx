@@ -1,14 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { 
-  ShoppingBag, Trash2, Plus, Minus, CreditCard, MapPin, Clock, 
-  Phone, ChevronRight, Info, CheckCircle2, Tag, Percent, ChevronDown
+  ShoppingBag, Plus, Minus, CreditCard, MapPin, Clock, 
+  Phone, ChevronRight, Info, CheckCircle2, Percent, ChevronDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import Navbar from "@/components/layout/Navbar";
@@ -17,19 +16,18 @@ import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function Cart() {
-  const { items, updateQuantity, removeFromCart, subtotal, clearCart } = useCart();
+  const { items, updateQuantity, subtotal } = useCart();
   const { user } = useAuth();
   const [, setLocation] = useLocation();
-  const [selectedSlot, setSelectedSlot] = useState("");
   const [avoidCalling, setAvoidCalling] = useState(false);
   
   const taxes = Math.round(subtotal * 0.05);
   const deliveryFee = subtotal > 1000 ? 0 : 50;
   const total = subtotal + taxes + deliveryFee;
 
-  const handleCheckout = () => {
+  const handleProceedToCheckout = () => {
     if (!user) {
-      setLocation("/login?redirect=/cart");
+      setLocation("/login?redirect=/checkout");
       return;
     }
     setLocation("/checkout");
@@ -101,7 +99,7 @@ export default function Cart() {
                 </CardContent>
               </Card>
 
-              {/* Address */}
+              {/* Address Placeholder */}
               <Card className="border-none shadow-sm overflow-hidden">
                 <CardContent className="p-5">
                   <div className="flex items-center gap-4">
@@ -112,13 +110,16 @@ export default function Cart() {
                       <p className="font-semibold">Address</p>
                     </div>
                   </div>
-                  <Button className="w-full mt-4 bg-primary hover:bg-primary/90 h-12 font-semibold">
+                  <Button 
+                    onClick={handleProceedToCheckout}
+                    className="w-full mt-4 bg-primary hover:bg-primary/90 h-12 font-semibold"
+                  >
                     Select address
                   </Button>
                 </CardContent>
               </Card>
 
-              {/* Time Slot */}
+              {/* Slot Placeholder */}
               <Card className="border-none shadow-sm overflow-hidden">
                 <CardContent className="p-5">
                   <div className="flex items-center gap-4 mb-4">
@@ -130,23 +131,16 @@ export default function Cart() {
                     </div>
                     <ChevronDown className="h-5 w-5 text-gray-400" />
                   </div>
-                  <RadioGroup value={selectedSlot} onValueChange={setSelectedSlot} className="grid grid-cols-3 gap-2">
-                    {["9 AM", "12 PM", "3 PM"].map((slot) => (
-                      <div key={slot}>
-                        <RadioGroupItem value={slot} id={slot} className="peer sr-only" />
-                        <Label
-                          htmlFor={slot}
-                          className="flex items-center justify-center p-3 bg-gray-50 border border-gray-200 rounded-lg cursor-pointer hover:border-primary/50 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-blue-50 transition-all text-sm font-medium"
-                        >
-                          {slot}
-                        </Label>
-                      </div>
-                    ))}
-                  </RadioGroup>
+                  <Button 
+                    onClick={handleProceedToCheckout}
+                    className="w-full bg-violet-600 hover:bg-violet-700 h-12 font-semibold text-white rounded-lg"
+                  >
+                    Select time & date
+                  </Button>
                 </CardContent>
               </Card>
 
-              {/* Payment Method */}
+              {/* Payment Method Placeholder */}
               <Card className="border-none shadow-sm overflow-hidden">
                 <CardContent className="p-5">
                   <div className="flex items-center gap-4">
@@ -154,31 +148,18 @@ export default function Cart() {
                       <CreditCard className="h-5 w-5 text-gray-600" />
                     </div>
                     <div className="flex-1">
-                      <p className="font-semibold">Payment Method</p>
-                      <p className="text-sm text-gray-500">Razorpay (Cards, UPI, Net Banking)</p>
+                      <p className="font-semibold text-gray-400">Payment Method</p>
                     </div>
-                    <ChevronRight className="h-5 w-5 text-gray-400" />
+                    <ChevronRight className="h-5 w-5 text-gray-300" />
                   </div>
                 </CardContent>
               </Card>
-
-              {/* Cancellation Policy */}
-              <div className="p-5 bg-white rounded-2xl border border-gray-100 shadow-sm">
-                <h3 className="font-bold text-gray-900 mb-2">Cancellation policy</h3>
-                <p className="text-sm text-gray-600 leading-relaxed mb-3">
-                  Free cancellations if done more than 12 hrs before the service or if a professional isn't assigned. A fee will be charged otherwise.
-                </p>
-                <button className="text-primary text-sm font-semibold hover:underline">
-                  Read full policy
-                </button>
-              </div>
             </div>
 
             {/* Right Column - Order Summary */}
             <div className="lg:col-span-5">
               <Card className="border-none shadow-lg sticky top-24 overflow-hidden">
                 <CardContent className="p-0">
-                  {/* Items List */}
                   <div className="p-5 space-y-4 max-h-[320px] overflow-y-auto">
                     {items.map((item) => (
                       <div key={item.id} className="flex items-start gap-3">
@@ -211,7 +192,6 @@ export default function Cart() {
 
                   <Separator />
 
-                  {/* Frequently Added Section */}
                   <div className="p-5 bg-gray-50/50">
                     <p className="text-sm font-semibold text-gray-700 mb-3">Frequently added together</p>
                     <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
@@ -228,7 +208,6 @@ export default function Cart() {
 
                   <Separator />
 
-                  {/* Options */}
                   <div className="p-5">
                     <div className="flex items-center gap-3">
                       <Checkbox 
@@ -244,7 +223,6 @@ export default function Cart() {
 
                   <Separator />
 
-                  {/* Coupons */}
                   <div className="p-5">
                     <div className="flex items-center justify-between cursor-pointer hover:bg-gray-50 -mx-5 px-5 py-2 transition-colors">
                       <div className="flex items-center gap-3">
@@ -257,7 +235,6 @@ export default function Cart() {
 
                   <Separator />
 
-                  {/* Payment Summary */}
                   <div className="p-5 space-y-3">
                     <h3 className="font-bold text-gray-900 mb-4">Payment summary</h3>
                     <div className="flex justify-between text-sm">
@@ -278,19 +255,14 @@ export default function Cart() {
                       </div>
                     )}
                     <Separator className="my-3" />
-                    <div className="flex justify-between">
-                      <span className="font-bold text-gray-900">Total amount</span>
-                      <span className="font-bold text-gray-900">₹{total}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-bold text-gray-900">Amount to pay</span>
-                      <span className="font-bold text-gray-900">₹{total}</span>
+                    <div className="flex justify-between font-bold text-gray-900">
+                      <span>Total amount</span>
+                      <span>₹{total}</span>
                     </div>
                   </div>
 
                   <Separator />
 
-                  {/* Final Amount & Checkout */}
                   <div className="p-5 bg-white">
                     <div className="flex items-center justify-between mb-4">
                       <div>
@@ -302,10 +274,10 @@ export default function Cart() {
                       </button>
                     </div>
                     <Button 
-                      onClick={handleCheckout}
+                      onClick={handleProceedToCheckout}
                       className="w-full bg-primary hover:bg-primary/90 h-14 text-lg font-bold rounded-xl shadow-lg"
                     >
-                      {user ? "Proceed to Pay" : "Login to Continue"}
+                      {user ? "Proceed to Checkout" : "Login to Continue"}
                     </Button>
                   </div>
                 </CardContent>
