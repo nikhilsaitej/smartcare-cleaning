@@ -6,6 +6,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  config: SupabaseConfig | null;
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signInWithGoogle: () => Promise<{ error: any }>;
@@ -13,6 +14,13 @@ interface AuthContextType {
   sendOTP: (phone: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: any }>;
+  config: SupabaseConfig | null;
+}
+
+interface SupabaseConfig {
+  supabaseUrl: string;
+  supabaseAnonKey: string;
+  googleMapsApiKey: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -20,7 +28,22 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [config, setConfig] = useState<SupabaseConfig | null>(null);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Fetch configuration
+    fetch("/api/config")
+      .then((res) => res.json())
+      .then((data) => {
+        setConfig(data);
+        if (typeof window !== "undefined") {
+          (window as any).ENV = {
+            GOOGLE_MAPS_API_KEY: data.googleMapsApiKey
+          };
+        }
+      });
+  }, []);
 
   useEffect(() => {
     let subscription: { unsubscribe: () => void } | null = null;

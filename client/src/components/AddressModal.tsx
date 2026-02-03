@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { Loader } from "@googlemaps/js-api-loader";
 
 export interface SavedAddress {
   id: string;
@@ -101,6 +102,12 @@ export default function AddressModal({
     savedAddresses.length > 0 ? savedAddresses[0].id : null
   );
   
+  // Google Maps state
+  const [googleLoaded, setGoogleLoaded] = useState(false);
+  const autocompleteService = useRef<any>(null);
+  const placesService = useRef<any>(null);
+  const geocoder = useRef<any>(null);
+
   // Form state
   const [formData, setFormData] = useState<Partial<SavedAddress>>({
     type: "home",
@@ -119,37 +126,53 @@ export default function AddressModal({
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    const loader = new Loader({
+      apiKey: (window as any).ENV?.GOOGLE_MAPS_API_KEY || "",
+      version: "weekly",
+      libraries: ["places"]
+    });
+
+    loader.load().then(() => {
+      setGoogleLoaded(true);
+      autocompleteService.current = new (window as any).google.maps.places.AutocompleteService();
+      geocoder.current = new (window as any).google.maps.Geocoder();
+      // Dummy element for PlacesService
+      const dummy = document.createElement("div");
+      placesService.current = new (window as any).google.maps.places.PlacesService(dummy);
+    }).catch(e => {
+      console.error("Google Maps failed to load", e);
+    });
+  }, []);
+
+  useEffect(() => {
     if (view === "search" && searchInputRef.current) {
       searchInputRef.current.focus();
     }
   }, [view]);
 
-  // Simulated search - In production, this would use Google Places API
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
-    if (query.length < 3) {
+    if (!query || query.length < 3 || !googleLoaded) {
       setSearchResults([]);
       return;
     }
 
     setIsSearching(true);
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 500));
     
-    // Simulated results for Vijayawada area
-    const mockResults = [
-      { id: "1", name: "Green Space Enclave", address: "Srinivasa Nagar Colony, Tadigadapa, Vijayawada" },
-      { id: "2", name: "Ashok Nagar", address: "Ashok Nagar, Vijayawada, Andhra Pradesh" },
-      { id: "3", name: "Benz Circle", address: "Benz Circle, MG Road, Vijayawada" },
-      { id: "4", name: "Gannavaram", address: "Gannavaram, Krishna District, Andhra Pradesh" },
-      { id: "5", name: "Moghalrajpuram", address: "Moghalrajpuram, Vijayawada, Andhra Pradesh" },
-    ].filter(r => 
-      r.name.toLowerCase().includes(query.toLowerCase()) || 
-      r.address.toLowerCase().includes(query.toLowerCase())
-    );
-    
-    setSearchResults(mockResults);
-    setIsSearching(false);
+    autocompleteService.current.getPlacePredictions({
+      input: query,
+      componentRestrictions: { country: "in" },
+      types: ["geocode", "establishment"]
+    }, (predictions: any, status: any) => {
+      setIsSearching(false);
+      if (status === (window as any).google.maps.places.AutocompleteStatus.OK && predictions) {
+        setSearchResults(predictions.map((p: any) => ({
+          id: p.place_id,
+          name: p.structured_formatting.main_text,
+          address: p.structured_formatting.secondary_text
+        })));
+      }
+    });
   };
 
   const handleUseCurrentLocation = async () => {
@@ -166,23 +189,34 @@ export default function AddressModal({
     }
 
     navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        
-        // In production, use Google Geocoding API to get address from coords
-        // For now, we'll use a mock response
-        setFormData(prev => ({
-          ...prev,
-          lat: latitude,
-          lng: longitude,
-          area: "Near Your Location",
-          city: "Vijayawada",
-          state: "Andhra Pradesh",
-        }));
-        
-        setView("form");
-        setIsLocating(false);
-        toast({ title: "Location detected", description: "Please fill in the remaining details." });
+      (position) => {
+        const latlng = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        };
+
+        if (googleLoaded && geocoder.current) {
+          geocoder.current.geocode({ location: latlng }, (results: any, status: any) => {
+            setIsLocating(false);
+            if (status === "OK" && results[0]) {
+              const addressComponents = results[0].address_components;
+              const getComp = (type: string) => addressComponents.find((c: any) => c.types.includes(type))?.long_name || "";
+
+              setFormData(prev => ({
+                ...prev,
+                lat: latlng.lat,
+                lng: latlng.lng,
+                area: getComp("sublocality") || getComp("neighborhood"),
+                street: getComp("route"),
+                city: getComp("locality"),
+                state: getComp("administrative_area_level_1"),
+                pincode: getComp("postal_code"),
+              }));
+              setView("form");
+              toast({ title: "Location detected", description: "Please fill in the remaining details." });
+            }
+          });
+        }
       },
       (error) => {
         toast({ 
@@ -197,14 +231,26 @@ export default function AddressModal({
   };
 
   const handleSelectSearchResult = (result: any) => {
-    setFormData(prev => ({
-      ...prev,
-      area: result.name,
-      street: result.address,
-      city: "Vijayawada",
-      state: "Andhra Pradesh",
-    }));
-    setView("form");
+    if (!googleLoaded || !placesService.current) return;
+
+    placesService.current.getDetails({ placeId: result.id }, (place: any, status: any) => {
+      if (status === (window as any).google.maps.places.PlacesServiceStatus.OK && place) {
+        const addressComponents = place.address_components;
+        const getComp = (type: string) => addressComponents.find((c: any) => c.types.includes(type))?.long_name || "";
+
+        setFormData(prev => ({
+          ...prev,
+          lat: place.geometry.location.lat(),
+          lng: place.geometry.location.lng(),
+          area: getComp("sublocality") || getComp("neighborhood"),
+          street: getComp("route"),
+          city: getComp("locality"),
+          state: getComp("administrative_area_level_1"),
+          pincode: getComp("postal_code"),
+        }));
+        setView("form");
+      }
+    });
   };
 
   const handleSaveAddress = () => {
