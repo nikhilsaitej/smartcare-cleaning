@@ -487,7 +487,8 @@ export async function registerRoutes(
     const deliveryFee = subtotalAmount > 1000 ? 0 : (isProductsOnly ? 40 : 50);
     const tipAmount = tip || 0;
 
-    const totalAmount = (subtotalAmount + taxes + platformFee + deliveryFee + tipAmount) * 100;
+    const totalAmount = Math.round((subtotalAmount + taxes + platformFee + deliveryFee + tipAmount) * 100);
+    console.log("Creating Razorpay order:", { subtotalAmount, taxes, platformFee, deliveryFee, tipAmount, totalAmount });
 
     const order = await createOrder({
       amount: totalAmount,

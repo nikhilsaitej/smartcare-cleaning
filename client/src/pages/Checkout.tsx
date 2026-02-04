@@ -223,7 +223,7 @@ export default function CheckoutPage() {
           tip: tipAmount,
           address: selectedAddress,
           slot: !isProductsOnly ? { date: selectedDate, time: selectedTime } : null,
-          idempotencyKey: `checkout_${Date.now()}_${user?.id}`
+          idempotencyKey: `checkout_${Date.now()}_${user?.id}_${totalAmount}`
         })
       });
 
