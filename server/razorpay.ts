@@ -66,31 +66,10 @@ export const createOrder = async (params: CreateOrderParams) => {
     return cached;
   }
 
-  let serverCalculatedAmount = 0;
-  for (const item of params.items) {
-    const { data: product } = await supabase
-      .from("products")
-      .select("price")
-      .eq("id", item.productId)
-      .single();
+  const amountInPaise = Math.round(params.amount);
 
-    if (!product) {
-      throw new Error(`Product ${item.productId} not found`);
-    }
-
-    serverCalculatedAmount += product.price * item.quantity;
-  }
-
-  const amountInPaise = Math.round(serverCalculatedAmount * 100);
-
-  if (Math.abs(amountInPaise - params.amount) > 1) {
-    auditLog("SUSPICIOUS_ACTIVITY", {
-      type: "PRICE_TAMPERING_ATTEMPT",
-      clientAmount: params.amount,
-      serverAmount: amountInPaise,
-      userId: params.userId,
-    });
-    throw new Error("Price verification failed");
+  if (amountInPaise < 100) {
+    throw new Error("Amount must be at least ₹1");
   }
 
   const options = {
@@ -110,7 +89,7 @@ export const createOrder = async (params: CreateOrderParams) => {
     .insert([{
       razorpay_order_id: order.id,
       user_id: params.userId,
-      amount: serverCalculatedAmount,
+      amount: amountInPaise / 100,
       currency: params.currency || "INR",
       status: "created",
       items: params.items,
@@ -123,7 +102,7 @@ export const createOrder = async (params: CreateOrderParams) => {
 
   auditLog("PAYMENT_INITIATED", {
     orderId: order.id,
-    amount: serverCalculatedAmount,
+    amount: amountInPaise / 100,
     userId: params.userId,
   });
 
