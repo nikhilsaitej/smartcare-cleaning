@@ -1,7 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { type Server } from "http";
 import { supabase } from "./supabase";
-import { sendContactConfirmationEmail, sendBookingConfirmationEmail, sendWelcomeEmail, sendPasswordResetEmail } from "./resend";
+import { sendContactConfirmationEmail, sendBookingConfirmationEmail, sendWelcomeEmail, sendPasswordResetEmail, sendOrderConfirmationEmail, sendAdminOrderNotificationEmail } from "./resend";
 import { sendBookingSMS, sendBookingWhatsApp, sendOTP } from "./twilio";
 import { 
   verifyAdmin, 
@@ -527,6 +527,29 @@ export async function registerRoutes(
     }
 
     const order = await handlePaymentSuccess(razorpay_order_id, razorpay_payment_id, user.id);
+
+    // Send order notification emails (async, don't block response)
+    const orderDetails = {
+      orderId: razorpay_order_id,
+      customerName: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Customer',
+      customerEmail: user.email,
+      customerPhone: user.phone,
+      items: order.items || [],
+      amount: order.amount,
+      tip: order.tip,
+      address: order.address,
+      slot: order.slot
+    };
+
+    // Send to customer
+    sendOrderConfirmationEmail(user.email, orderDetails).catch(err => 
+      console.error('Failed to send customer order email:', err)
+    );
+
+    // Send to admin
+    sendAdminOrderNotificationEmail(orderDetails).catch(err => 
+      console.error('Failed to send admin order notification:', err)
+    );
 
     res.json({ 
       success: true, 

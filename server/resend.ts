@@ -189,3 +189,172 @@ export async function sendBookingConfirmationEmail(to: string, name: string, ser
     console.error('Failed to send booking confirmation email:', error);
   }
 }
+
+interface OrderDetails {
+  orderId: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone?: string;
+  items: Array<{ name?: string; quantity: number; price: number }>;
+  amount: number;
+  tip?: number;
+  address?: { fullAddress: string; landmark?: string };
+  slot?: { date: string; time: string };
+}
+
+export async function sendOrderConfirmationEmail(to: string, order: OrderDetails) {
+  try {
+    const { client, fromEmail } = await getResendClient();
+    const itemsHtml = order.items.map(item => 
+      `<tr><td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">${item.name || 'Item'}</td><td style="padding: 8px; border-bottom: 1px solid #e2e8f0; text-align: center;">${item.quantity}</td><td style="padding: 8px; border-bottom: 1px solid #e2e8f0; text-align: right;">₹${item.price * item.quantity}</td></tr>`
+    ).join('');
+
+    await client.emails.send({
+      from: fromEmail || 'SmartCare <noreply@smartcare.com>',
+      to: [to],
+      subject: `Order Confirmed - ${order.orderId} - SmartCare Cleaning Solutions`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #7c3aed, #a855f7); padding: 30px; text-align: center;">
+            <h1 style="color: white; margin: 0;">Order Confirmed!</h1>
+            <p style="color: rgba(255,255,255,0.9); margin-top: 10px;">Thank you for your order</p>
+          </div>
+          <div style="padding: 30px; background: #f8fafc;">
+            <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+              <p style="margin: 0; color: #64748b; font-size: 14px;">Order ID</p>
+              <p style="margin: 5px 0 0; color: #1e40af; font-size: 18px; font-weight: bold;">${order.orderId}</p>
+            </div>
+            
+            <h3 style="color: #1e40af; margin-bottom: 15px;">Order Details</h3>
+            <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px;">
+              <thead>
+                <tr style="background: #f1f5f9;">
+                  <th style="padding: 12px 8px; text-align: left;">Item</th>
+                  <th style="padding: 12px 8px; text-align: center;">Qty</th>
+                  <th style="padding: 12px 8px; text-align: right;">Price</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsHtml}
+              </tbody>
+            </table>
+            
+            <div style="background: white; padding: 15px; border-radius: 8px; margin-top: 15px;">
+              ${order.tip && order.tip > 0 ? `<div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span style="color: #64748b;">Tip</span><span style="color: #10b981;">₹${order.tip}</span></div>` : ''}
+              <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 18px; border-top: 2px solid #e2e8f0; padding-top: 10px;">
+                <span>Total Paid</span>
+                <span style="color: #7c3aed;">₹${order.amount}</span>
+              </div>
+            </div>
+
+            ${order.address ? `
+            <div style="background: white; padding: 15px; border-radius: 8px; margin-top: 15px;">
+              <h4 style="margin: 0 0 10px; color: #1e40af;">Delivery Address</h4>
+              <p style="margin: 0; color: #475569;">${order.address.fullAddress}</p>
+              ${order.address.landmark ? `<p style="margin: 5px 0 0; color: #64748b; font-size: 14px;">Landmark: ${order.address.landmark}</p>` : ''}
+            </div>
+            ` : ''}
+
+            ${order.slot ? `
+            <div style="background: white; padding: 15px; border-radius: 8px; margin-top: 15px;">
+              <h4 style="margin: 0 0 10px; color: #1e40af;">Service Schedule</h4>
+              <p style="margin: 0; color: #475569;">${order.slot.date}</p>
+              <p style="margin: 5px 0 0; color: #7c3aed; font-weight: bold;">${order.slot.time}</p>
+            </div>
+            ` : ''}
+
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+              <p style="color: #64748b; font-size: 14px;">
+                Best regards,<br>
+                <strong>SmartCare Cleaning Solutions Team</strong><br>
+                Vijayawada, India
+              </p>
+            </div>
+          </div>
+        </div>
+      `
+    });
+    console.log('Order confirmation email sent to:', to);
+  } catch (error) {
+    console.error('Failed to send order confirmation email:', error);
+  }
+}
+
+export async function sendAdminOrderNotificationEmail(order: OrderDetails) {
+  try {
+    const { client, fromEmail } = await getResendClient();
+    const itemsHtml = order.items.map(item => 
+      `<tr><td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">${item.name || 'Item'}</td><td style="padding: 8px; border-bottom: 1px solid #e2e8f0; text-align: center;">${item.quantity}</td><td style="padding: 8px; border-bottom: 1px solid #e2e8f0; text-align: right;">₹${item.price * item.quantity}</td></tr>`
+    ).join('');
+
+    await client.emails.send({
+      from: fromEmail || 'SmartCare <noreply@smartcare.com>',
+      to: ['smartcarecleaningsolutions@gmail.com'],
+      subject: `🎉 New Order Received - ${order.orderId} - ₹${order.amount}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #f97316, #fb923c); padding: 30px; text-align: center;">
+            <h1 style="color: white; margin: 0;">🎉 New Order!</h1>
+            <p style="color: rgba(255,255,255,0.9); margin-top: 10px;">You have received a new order</p>
+          </div>
+          <div style="padding: 30px; background: #f8fafc;">
+            <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #f97316;">
+              <p style="margin: 0; font-weight: bold; color: #92400e;">Order Amount: ₹${order.amount}</p>
+              <p style="margin: 5px 0 0; color: #a16207; font-size: 14px;">Order ID: ${order.orderId}</p>
+            </div>
+
+            <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+              <h4 style="margin: 0 0 10px; color: #1e40af;">Customer Details</h4>
+              <p style="margin: 0;"><strong>Name:</strong> ${order.customerName}</p>
+              <p style="margin: 5px 0 0;"><strong>Email:</strong> ${order.customerEmail}</p>
+              ${order.customerPhone ? `<p style="margin: 5px 0 0;"><strong>Phone:</strong> ${order.customerPhone}</p>` : ''}
+            </div>
+            
+            <h3 style="color: #1e40af; margin-bottom: 15px;">Order Items</h3>
+            <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px;">
+              <thead>
+                <tr style="background: #f1f5f9;">
+                  <th style="padding: 12px 8px; text-align: left;">Item</th>
+                  <th style="padding: 12px 8px; text-align: center;">Qty</th>
+                  <th style="padding: 12px 8px; text-align: right;">Price</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsHtml}
+              </tbody>
+            </table>
+            
+            ${order.tip && order.tip > 0 ? `
+            <div style="background: #d1fae5; padding: 10px 15px; border-radius: 8px; margin-top: 15px;">
+              <p style="margin: 0; color: #065f46;"><strong>Tip included:</strong> ₹${order.tip}</p>
+            </div>
+            ` : ''}
+
+            ${order.address ? `
+            <div style="background: white; padding: 15px; border-radius: 8px; margin-top: 15px;">
+              <h4 style="margin: 0 0 10px; color: #1e40af;">📍 Delivery Address</h4>
+              <p style="margin: 0; color: #475569;">${order.address.fullAddress}</p>
+              ${order.address.landmark ? `<p style="margin: 5px 0 0; color: #64748b; font-size: 14px;">Landmark: ${order.address.landmark}</p>` : ''}
+            </div>
+            ` : ''}
+
+            ${order.slot ? `
+            <div style="background: white; padding: 15px; border-radius: 8px; margin-top: 15px;">
+              <h4 style="margin: 0 0 10px; color: #1e40af;">📅 Service Schedule</h4>
+              <p style="margin: 0; color: #475569;">${order.slot.date}</p>
+              <p style="margin: 5px 0 0; color: #7c3aed; font-weight: bold;">${order.slot.time}</p>
+            </div>
+            ` : ''}
+
+            <div style="text-align: center; margin-top: 30px;">
+              <a href="https://smartcare-cleaning.replit.app/admin" style="background-color: #1e40af; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">View in Admin Dashboard</a>
+            </div>
+          </div>
+        </div>
+      `
+    });
+    console.log('Admin order notification email sent');
+  } catch (error) {
+    console.error('Failed to send admin order notification email:', error);
+  }
+}
