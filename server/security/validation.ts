@@ -105,11 +105,15 @@ export const schemas = {
 
   createOrder: z.object({
     items: z.array(z.object({
-      productId: z.string().uuid(),
+      productId: z.string(),
       quantity: z.number().int().min(1).max(100),
-      price: z.number().positive()
+      price: z.number().positive(),
+      category: z.string().optional()
     })).min(1).max(50),
-    idempotencyKey: z.string().min(16).max(64)
+    tip: z.number().min(0).max(10000).optional(),
+    address: z.any().optional(),
+    slot: z.any().optional(),
+    idempotencyKey: z.string().min(10).max(100)
   }),
 
   verifyPayment: z.object({
