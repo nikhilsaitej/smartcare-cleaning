@@ -8,6 +8,7 @@ import { sanitizeInput, requestSizeLimit } from "./security/middleware";
 import { createRequestLogger } from "./security/auditLogger";
 
 const app = express();
+app.set("trust proxy", 1);
 const httpServer = createServer(app);
 
 const ALLOWED_ORIGINS = [
@@ -44,14 +45,14 @@ app.use(helmet({
   contentSecurityPolicy: isDev ? false : {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://*.supabase.co"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://*.supabase.co", "https://checkout.razorpay.com"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       imgSrc: ["'self'", "data:", "https:", "blob:"],
-      connectSrc: ["'self'", "https://*.supabase.co", "wss://*.supabase.co", "ws:"],
+      connectSrc: ["'self'", "https://*.supabase.co", "wss://*.supabase.co", "ws:", "https://lumberjack.razorpay.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
-      frameSrc: ["'self'"],
+      frameSrc: ["'self'", "https://api.razorpay.com"],
       workerSrc: ["'self'", "blob:"],
       formAction: ["'self'"]
     },

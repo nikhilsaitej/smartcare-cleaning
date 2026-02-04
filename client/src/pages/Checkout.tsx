@@ -182,6 +182,19 @@ export default function CheckoutPage() {
 
     setLoading(true);
     try {
+      // Check if Razorpay is loaded
+      if (!(window as any).Razorpay) {
+        const script = document.createElement("script");
+        script.src = "https://checkout.razorpay.com/v1/checkout.js";
+        script.async = true;
+        document.body.appendChild(script);
+        
+        // Wait for script to load
+        await new Promise((resolve) => {
+          script.onload = resolve;
+        });
+      }
+
       const configRes = await fetch("/api/payment/config", {
         headers: { "Authorization": `Bearer ${session?.access_token}` }
       });
