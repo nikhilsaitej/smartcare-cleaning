@@ -19,7 +19,8 @@ import {
   verifyWebhookSignature, 
   handlePaymentSuccess, 
   handleWebhookEvent,
-  getRazorpayKeyId 
+  getRazorpayKeyId,
+  fetchOrderStatus
 } from "./razorpay";
 import { getCloudinarySignature } from "./cloudinary";
 import { schemas, validate, validateParams, validateQuery } from "./security/validation";
@@ -570,7 +571,7 @@ export async function registerRoutes(
 
   app.get("/api/orders/:orderId/status", verifyToken, asyncHandler(async (req: Request, res: Response) => {
     const user = (req as any).user;
-    const { orderId } = req.params;
+    const orderId = req.params.orderId as string;
 
     const { data: order, error } = await supabase
       .from("orders")
@@ -581,6 +582,16 @@ export async function registerRoutes(
 
     if (error || !order) {
       return res.status(404).json({ error: "Order not found" });
+    }
+
+    const razorpayStatus = await fetchOrderStatus(orderId);
+    
+    if (razorpayStatus && razorpayStatus.status !== order.status) {
+      await supabase
+        .from("orders")
+        .update({ status: razorpayStatus.status })
+        .eq("razorpay_order_id", orderId);
+      order.status = razorpayStatus.status;
     }
 
     const itemsWithNames = await Promise.all((order.items || []).map(async (item: any) => {

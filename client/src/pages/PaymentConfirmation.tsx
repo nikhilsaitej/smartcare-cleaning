@@ -101,7 +101,7 @@ const statusConfig: Record<string, {
 
 export default function PaymentConfirmation() {
   const [, setLocation] = useLocation();
-  const { session } = useAuth();
+  const { session, user } = useAuth();
   const [order, setOrder] = useState<OrderDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -110,8 +110,28 @@ export default function PaymentConfirmation() {
   const urlParams = new URLSearchParams(window.location.search);
   const orderId = urlParams.get("order_id");
   const paymentId = urlParams.get("payment_id");
+  const statusFromUrl = urlParams.get("status");
 
   useEffect(() => {
+    if (statusFromUrl === "failed" && orderId) {
+      setOrder({
+        id: "",
+        razorpay_order_id: orderId,
+        amount: 0,
+        status: "failed",
+        items: [],
+        created_at: new Date().toISOString()
+      });
+      setLoading(false);
+      return;
+    }
+
+    if (!session) {
+      setLoading(false);
+      setError("Please log in to view your order");
+      return;
+    }
+
     const fetchOrderDetails = async () => {
       if (!orderId) {
         setError("No order ID provided");

@@ -269,3 +269,20 @@ export const handleWebhookEvent = async (event: any) => {
 export const getRazorpayKeyId = (): string | null => {
   return process.env.RAZORPAY_KEY_ID || null;
 };
+
+export const fetchOrderStatus = async (orderId: string): Promise<{ status: string; amount_paid: number } | null> => {
+  if (!razorpay) {
+    return null;
+  }
+  
+  try {
+    const order = await razorpay.orders.fetch(orderId);
+    return {
+      status: order.status,
+      amount_paid: order.amount_paid
+    };
+  } catch (error) {
+    console.error("Error fetching Razorpay order:", error);
+    return null;
+  }
+};
