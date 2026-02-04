@@ -117,6 +117,22 @@ The application implements enterprise-grade security measures:
 - **Environment Variables Required**:
   - `SUPABASE_URL` - Supabase project URL
   - `SUPABASE_ANON_KEY` - Supabase anonymous/public key
+  - `SUPABASE_SERVICE_ROLE_KEY` - Service role key for admin operations (bypasses RLS)
+- **Setup SQL Scripts** (run in Supabase SQL Editor):
+  - `supabase/create_orders_table.sql` - Creates orders table with RLS policies
+  - `supabase/rls_policies.sql` - Sets up RLS policies for all tables
+
+### Admin Dashboard
+- **Access**: Restricted to smartcarecleaningsolutions@gmail.com only
+- **Features**:
+  - Overview stats: Messages, Upcoming Bookings, In-Stock Products, Active Services
+  - Recent Orders table with customer info, amounts, status badges
+  - Messages tab: View and delete customer inquiries
+  - Bookings tab: View service bookings with status management
+  - Products tab: CRUD operations with image upload via Cloudinary
+  - Services tab: CRUD operations with duration and pricing management
+  - Orders tab: Full order history with detailed item breakdowns
+  - Integration Status footer showing connection status of all services
 
 ### PostgreSQL Database
 - **ORM**: Drizzle ORM with drizzle-kit for migrations

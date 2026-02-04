@@ -1,0 +1,222 @@
+1️⃣ Orders
+
+What it is:
+A payment + transaction record
+
+Created when:
+👉 User completes checkout and pays (or attempts to pay)
+
+Contains:
+
+Order ID
+
+User ID
+
+Amount
+
+Payment status (created / paid / failed / refunded)
+
+Razorpay payment ID
+
+Items purchased (products/services)
+
+Tax, discounts, tips
+
+Timestamp
+
+Why it exists:
+
+Accounting
+
+Refunds
+
+Payment reconciliation
+
+Legal records
+
+Example:
+
+Order #SC-1042 — ₹4,999 — Paid — Razorpay
+
+🔐 Money-critical. Must never be edited manually except refunds.
+
+2️⃣ Bookings
+
+What it is:
+A service execution record
+
+Created when:
+👉 User books a service (cleaning, sanitization, etc.)
+
+Contains:
+
+Booking ID
+
+Service type
+
+Date & time slot
+
+Address
+
+Assigned professional
+
+Booking status (pending / assigned / completed / cancelled)
+
+Linked Order ID
+
+Why it exists:
+
+Operational scheduling
+
+Workforce management
+
+Service fulfillment
+
+Example:
+
+Office Cleaning — Feb 10 — 10AM–1PM — Assigned to Ramesh
+
+⚠️ Bookings can exist without payment (COD, pending payment, admin booking).
+
+🔁 Relationship (IMPORTANT)
+Order (Money)
+   ↓
+Booking (Service execution)
+
+
+One Order can create:
+
+One booking
+
+Multiple bookings
+
+No booking (product-only purchase)
+
+3️⃣ Messages
+
+What it is:
+User ↔ Business communication
+
+Created when:
+
+Contact form submitted
+
+Customer support request
+
+Booking query
+
+Complaint / feedback
+
+Contains:
+
+Name
+
+Email / phone
+
+Message content
+
+Related booking/order (optional)
+
+Status (new / replied / closed)
+
+Why it exists:
+
+Customer trust
+
+Issue resolution
+
+Legal audit trail
+
+Example:
+
+“Cleaner arrived late today”
+
+📌 Never tied directly to payment logic
+
+4️⃣ Products
+
+What it is:
+Physical items you sell
+
+Examples:
+
+Floor cleaner
+
+Microfiber cloth
+
+Gloves
+
+Cleaning kits
+
+Contains:
+
+Product ID
+
+Name
+
+Price
+
+Stock quantity
+
+Images (Cloudinary)
+
+Return/refund rules
+
+SKU
+
+Why it exists:
+
+Inventory management
+
+E-commerce sales
+
+Warehousing & logistics
+
+Example:
+
+Latex Cleaning Gloves — ₹150 — Stock: 200
+
+📦 Shipped, returned, refunded differently than services
+
+5️⃣ Services
+
+What it is:
+What your company DOES, not ships
+
+Examples:
+
+Home cleaning
+
+Office cleaning
+
+Deep cleaning
+
+Sanitization
+
+Contains:
+
+Service ID
+
+Base price
+
+Duration
+
+Slot availability
+
+Cancellation rules
+
+Add-ons
+
+Why it exists:
+
+Pricing logic
+
+Booking rules
+
+Staff planning
+
+Example:
+
+Office Cleaning — ₹4,999 — 3 hours
+
+🧹 No stock, no shipping, time-based
