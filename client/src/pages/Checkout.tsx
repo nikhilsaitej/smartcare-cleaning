@@ -32,7 +32,7 @@ import { useToast } from "@/hooks/use-toast";
 import AddressModal, { SavedAddress, useAddresses } from "@/components/AddressModal";
 
 export default function CheckoutPage() {
-  const { items, updateQuantity, addItem, subtotal, clearCart } = useCart();
+  const { items, updateQuantity, addToCart, subtotal, clearCart } = useCart();
   const { user, session } = useAuth();
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
@@ -107,12 +107,12 @@ export default function CheckoutPage() {
   }, [hasServices]);
 
   const handleAddFrequentItem = (item: { id: string; title: string; price: number; category: string }) => {
-    addItem({
+    addToCart({
       id: item.id,
       title: item.title,
       price: item.price,
-      quantity: 1,
       category: item.category,
+      rating: 4.5,
       image: ""
     });
     toast({ title: "Added to cart", description: `${item.title} added successfully` });
@@ -278,8 +278,9 @@ export default function CheckoutPage() {
 
           if (verifyRes.ok) {
             clearCart();
-            setLocation("/dashboard?success=true");
-            toast({ title: "Order Placed!", description: "Your order has been confirmed." });
+            setLocation(`/payment-confirmation?order_id=${response.razorpay_order_id}&payment_id=${response.razorpay_payment_id}`);
+          } else {
+            setLocation(`/payment-confirmation?order_id=${response.razorpay_order_id}&status=failed`);
           }
         },
         prefill: {

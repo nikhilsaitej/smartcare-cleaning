@@ -20,6 +20,7 @@ import AuthCallback from "@/pages/AuthCallback";
 import Dashboard from "@/pages/Dashboard";
 import Admin from "@/pages/Admin";
 import Checkout from "@/pages/Checkout";
+import PaymentConfirmation from "@/pages/PaymentConfirmation";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -38,6 +39,7 @@ function Router() {
       <Route path="/auth/callback" component={AuthCallback} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/admin" component={Admin} />
+      <Route path="/payment-confirmation" component={PaymentConfirmation} />
       <Route component={NotFound} />
     </Switch>
   );

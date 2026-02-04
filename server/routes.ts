@@ -568,6 +568,46 @@ export async function registerRoutes(
     res.json(data || []);
   }));
 
+  app.get("/api/orders/:orderId/status", verifyToken, asyncHandler(async (req: Request, res: Response) => {
+    const user = (req as any).user;
+    const { orderId } = req.params;
+
+    const { data: order, error } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("razorpay_order_id", orderId)
+      .eq("user_id", user.id)
+      .single();
+
+    if (error || !order) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    const itemsWithNames = await Promise.all((order.items || []).map(async (item: any) => {
+      const { data: product } = await supabase
+        .from("products")
+        .select("name")
+        .eq("id", item.productId)
+        .single();
+      
+      const { data: service } = !product ? await supabase
+        .from("services")
+        .select("name")
+        .eq("id", item.productId)
+        .single() : { data: null };
+
+      return {
+        ...item,
+        name: product?.name || service?.name || "Item"
+      };
+    }));
+
+    res.json({
+      ...order,
+      items: itemsWithNames
+    });
+  }));
+
   app.get("/api/admin/orders", adminLimiter, verifyAdmin, asyncHandler(async (req: Request, res: Response) => {
     const { data, error } = await supabase
       .from("orders")
