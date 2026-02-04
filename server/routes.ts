@@ -471,12 +471,23 @@ export async function registerRoutes(
 
   app.post("/api/payment/create-order", checkoutLimiter, verifyToken, validate(schemas.createOrder), asyncHandler(async (req: Request, res: Response) => {
     const user = (req as any).user;
-    const { items, idempotencyKey } = req.body;
+    const { items, tip, idempotencyKey } = req.body;
 
-    let totalAmount = 0;
+    let subtotalAmount = 0;
     for (const item of items) {
-      totalAmount += item.price * item.quantity * 100;
+      subtotalAmount += item.price * item.quantity;
     }
+
+    // Calculate additional costs matching Checkout.tsx
+    const taxes = Math.round(subtotalAmount * 0.05);
+    const platformFee = 10;
+    const hasServices = items.some((item: any) => item.category === "Service");
+    const hasProducts = items.some((item: any) => item.category !== "Service");
+    const isProductsOnly = hasProducts && !hasServices;
+    const deliveryFee = subtotalAmount > 1000 ? 0 : (isProductsOnly ? 40 : 50);
+    const tipAmount = tip || 0;
+
+    const totalAmount = (subtotalAmount + taxes + platformFee + deliveryFee + tipAmount) * 100;
 
     const order = await createOrder({
       amount: totalAmount,
