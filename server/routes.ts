@@ -471,14 +471,13 @@ export async function registerRoutes(
 
   app.post("/api/payment/create-order", checkoutLimiter, verifyToken, validate(schemas.createOrder), asyncHandler(async (req: Request, res: Response) => {
     const user = (req as any).user;
-    const { items, tip, idempotencyKey } = req.body;
+    const { items, tip, address, slot, avoidCalling, idempotencyKey } = req.body;
 
     let subtotalAmount = 0;
     for (const item of items) {
       subtotalAmount += item.price * item.quantity;
     }
 
-    // Calculate additional costs matching Checkout.tsx
     const taxes = Math.round(subtotalAmount * 0.05);
     const platformFee = 10;
     const hasServices = items.some((item: any) => item.category === "Service");
@@ -496,6 +495,10 @@ export async function registerRoutes(
       receipt: `order_${Date.now()}`,
       userId: user.id,
       items,
+      tip: tipAmount,
+      address,
+      slot,
+      avoidCalling,
       idempotencyKey,
     });
 

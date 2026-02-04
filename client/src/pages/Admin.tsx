@@ -15,7 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { 
   Mail, Calendar, User, Phone, MapPin, Clock, MessageSquare, Package, Loader2, 
   Plus, Pencil, Trash2, RefreshCw, Database, Send, MessageCircle, CheckCircle,
-  ShoppingBag, Wrench, BarChart3, Settings, ExternalLink, ImageIcon
+  ShoppingBag, Wrench, BarChart3, Settings, ExternalLink, ImageIcon, CreditCard
 } from "lucide-react";
 import ImageUpload from "@/components/ui/ImageUpload";
 
@@ -61,6 +61,32 @@ interface Service {
   created_at: string;
 }
 
+interface Order {
+  id: string;
+  razorpay_order_id?: string;
+  razorpay_payment_id?: string;
+  user_id: string;
+  amount: number;
+  currency: string;
+  status: string;
+  items: Array<{ productId: string; quantity: number; price: number; category?: string }>;
+  tip?: number;
+  address?: {
+    fullAddress: string;
+    landmark?: string;
+    type?: string;
+    name?: string;
+    phone?: string;
+  };
+  slot?: {
+    date: string;
+    time: string;
+  };
+  avoid_calling?: boolean;
+  created_at: string;
+  paid_at?: string;
+}
+
 interface Stats {
   contacts: number;
   bookings: number;
@@ -87,6 +113,7 @@ export default function Admin() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [services, setServices] = useState<Service[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -116,11 +143,12 @@ export default function Admin() {
     if (!session?.access_token) return;
     try {
       const headers = getAuthHeaders();
-      const [contactsRes, bookingsRes, productsRes, servicesRes, statsRes] = await Promise.all([
+      const [contactsRes, bookingsRes, productsRes, servicesRes, ordersRes, statsRes] = await Promise.all([
         fetch("/api/admin/contacts", { headers }),
         fetch("/api/admin/bookings", { headers }),
         fetch("/api/admin/products", { headers }),
         fetch("/api/admin/services", { headers }),
+        fetch("/api/admin/orders", { headers }),
         fetch("/api/admin/stats", { headers })
       ]);
       
@@ -128,6 +156,7 @@ export default function Admin() {
       if (bookingsRes.ok) setBookings(await bookingsRes.json());
       if (productsRes.ok) setProducts(await productsRes.json());
       if (servicesRes.ok) setServices(await servicesRes.json());
+      if (ordersRes.ok) setOrders(await ordersRes.json());
       if (statsRes.ok) setStats(await statsRes.json());
     } catch (error) {
       console.error("Failed to fetch admin data:", error);
@@ -423,13 +452,107 @@ export default function Admin() {
             </Card>
 
             {/* Main Tabs */}
-            <Tabs defaultValue="bookings" className="w-full">
+            <Tabs defaultValue="orders" className="w-full">
               <TabsList className="mb-6 flex-wrap h-auto gap-2">
+                <TabsTrigger value="orders" className="gap-2"><CreditCard className="h-4 w-4" /> Orders</TabsTrigger>
                 <TabsTrigger value="bookings" className="gap-2"><Calendar className="h-4 w-4" /> Bookings</TabsTrigger>
                 <TabsTrigger value="contacts" className="gap-2"><MessageSquare className="h-4 w-4" /> Messages</TabsTrigger>
                 <TabsTrigger value="products" className="gap-2"><ShoppingBag className="h-4 w-4" /> Products</TabsTrigger>
                 <TabsTrigger value="services" className="gap-2"><Wrench className="h-4 w-4" /> Services</TabsTrigger>
               </TabsList>
+
+              {/* Orders Tab */}
+              <TabsContent value="orders">
+                {loading ? (
+                  <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+                ) : orders.length === 0 ? (
+                  <Card><CardContent className="py-12 text-center">
+                    <CreditCard className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-500">No orders yet</p>
+                  </CardContent></Card>
+                ) : (
+                  <div className="space-y-4">
+                    {orders.map((order) => (
+                      <Card key={order.id} className="hover:shadow-md transition-shadow">
+                        <CardContent className="pt-6">
+                          <div className="flex flex-col gap-4">
+                            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                              <div className="flex items-center gap-3 flex-wrap">
+                                <span className="font-bold text-lg">Order #{order.razorpay_order_id?.slice(-8) || order.id.slice(0, 8)}</span>
+                                <Badge className={
+                                  order.status === 'paid' || order.status === 'captured' ? "bg-green-100 text-green-700" :
+                                  order.status === 'failed' ? "bg-red-100 text-red-700" :
+                                  order.status === 'refunded' ? "bg-purple-100 text-purple-700" :
+                                  "bg-yellow-100 text-yellow-700"
+                                }>
+                                  {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                                </Badge>
+                                <span className="text-xl font-bold text-primary">₹{order.amount}</span>
+                              </div>
+                              <div className="text-sm text-gray-400">
+                                {new Date(order.created_at).toLocaleString()}
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+                              {order.address && (
+                                <div className="bg-gray-50 p-3 rounded-lg">
+                                  <p className="font-semibold text-gray-700 mb-1 flex items-center gap-2">
+                                    <MapPin className="h-4 w-4" /> Delivery Address
+                                  </p>
+                                  {order.address.name && <p className="text-gray-600">{order.address.name}</p>}
+                                  {order.address.phone && <p className="text-gray-600">{order.address.phone}</p>}
+                                  <p className="text-gray-600">{order.address.fullAddress}</p>
+                                  {order.address.landmark && <p className="text-gray-500 text-xs">Landmark: {order.address.landmark}</p>}
+                                </div>
+                              )}
+
+                              {order.slot && (
+                                <div className="bg-blue-50 p-3 rounded-lg">
+                                  <p className="font-semibold text-gray-700 mb-1 flex items-center gap-2">
+                                    <Clock className="h-4 w-4" /> Service Slot
+                                  </p>
+                                  <p className="text-gray-600">{order.slot.date}</p>
+                                  <p className="text-gray-600">{order.slot.time}</p>
+                                </div>
+                              )}
+
+                              <div className="bg-green-50 p-3 rounded-lg">
+                                <p className="font-semibold text-gray-700 mb-1 flex items-center gap-2">
+                                  <Package className="h-4 w-4" /> Order Items
+                                </p>
+                                {order.items?.map((item, idx) => (
+                                  <p key={idx} className="text-gray-600 text-xs">
+                                    {item.quantity}x {item.category || 'Item'} - ₹{item.price}
+                                  </p>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="flex flex-wrap gap-3 pt-2 border-t">
+                              {order.tip && order.tip > 0 && (
+                                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                                  Tip: ₹{order.tip}
+                                </Badge>
+                              )}
+                              {order.avoid_calling && (
+                                <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                                  <Phone className="h-3 w-3 mr-1" /> Don't call before arriving
+                                </Badge>
+                              )}
+                              {order.razorpay_payment_id && (
+                                <Badge variant="outline" className="text-gray-500">
+                                  Payment ID: {order.razorpay_payment_id}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
 
               {/* Bookings Tab */}
               <TabsContent value="bookings">

@@ -17,6 +17,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Tooltip,
@@ -31,36 +32,32 @@ import { useToast } from "@/hooks/use-toast";
 import AddressModal, { SavedAddress, useAddresses } from "@/components/AddressModal";
 
 export default function CheckoutPage() {
-  const { items, updateQuantity, subtotal, clearCart } = useCart();
+  const { items, updateQuantity, addItem, subtotal, clearCart } = useCart();
   const { user, session } = useAuth();
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
   
   const [loading, setLoading] = useState(false);
   
-  // Address state
   const [addressModalOpen, setAddressModalOpen] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState<SavedAddress | null>(null);
   const { addresses, saveAddress, deleteAddress } = useAddresses();
   
-  // Slot Selection State
   const [slotModalOpen, setSlotModalOpen] = useState(false);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [slotsLoaded, setSlotsLoaded] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [selectedDateIndex, setSelectedDateIndex] = useState<number | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   
-  // Other Modals
   const [policyModalOpen, setPolicyModalOpen] = useState(false);
   const [breakupModalOpen, setBreakupModalOpen] = useState(false);
   const [couponModalOpen, setCouponModalOpen] = useState(false);
   const [avoidCalling, setAvoidCalling] = useState(false);
 
-  // Tip State
   const [selectedTip, setSelectedTip] = useState<number | null>(null);
   const [customTip, setCustomTip] = useState("");
 
-  // Get tip from URL if passed from cart
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tipParam = params.get("tip");
@@ -75,39 +72,51 @@ export default function CheckoutPage() {
     }
   }, []);
 
-  // Load first address if available
   useEffect(() => {
     if (addresses.length > 0 && !selectedAddress) {
       setSelectedAddress(addresses[0]);
     }
   }, [addresses, selectedAddress]);
 
-  // Determine cart type
   const hasServices = useMemo(() => items.some(item => item.category === "Service"), [items]);
   const hasProducts = useMemo(() => items.some(item => item.category !== "Service"), [items]);
   const isProductsOnly = hasProducts && !hasServices;
 
-  // Calculate totals
   const tipAmount = selectedTip === -1 ? (parseInt(customTip) || 0) : (selectedTip || 0);
   const taxes = Math.round(subtotal * 0.05);
   const platformFee = 10;
   const deliveryFee = subtotal > 1000 ? 0 : (isProductsOnly ? 40 : 50);
   const totalAmount = subtotal + taxes + platformFee + deliveryFee + tipAmount;
 
-  // Frequently added items based on cart content
   const frequentlyAdded = useMemo(() => {
     if (hasServices) {
       return [
-        { id: "fa1", name: "Deep Cleaning Add-on", price: 349 },
-        { id: "fa2", name: "Sanitization Spray", price: 199 }
+        { id: "service-addon-1", title: "Deep Cleaning Add-on", price: 349, category: "Service" },
+        { id: "service-addon-2", title: "Sanitization Spray", price: 199, category: "Product" },
+        { id: "service-addon-3", title: "Bathroom Deep Clean", price: 299, category: "Service" },
+        { id: "service-addon-4", title: "Kitchen Chimney Cleaning", price: 449, category: "Service" },
       ];
     } else {
       return [
-        { id: "fa3", name: "Floor Cleaner 1L", price: 249 },
-        { id: "fa4", name: "Microfiber Cloth Set", price: 149 }
+        { id: "product-addon-1", title: "Floor Cleaner 1L", price: 249, category: "Product" },
+        { id: "product-addon-2", title: "Microfiber Cloth Set", price: 149, category: "Product" },
+        { id: "product-addon-3", title: "Glass Cleaner 500ml", price: 129, category: "Product" },
+        { id: "product-addon-4", title: "Toilet Cleaner 1L", price: 179, category: "Product" },
       ];
     }
   }, [hasServices]);
+
+  const handleAddFrequentItem = (item: { id: string; title: string; price: number; category: string }) => {
+    addItem({
+      id: item.id,
+      title: item.title,
+      price: item.price,
+      quantity: 1,
+      category: item.category,
+      image: ""
+    });
+    toast({ title: "Added to cart", description: `${item.title} added successfully` });
+  };
 
   const coupons = [
     { code: "FIRST50", discount: "50% off", description: "For first-time users", maxDiscount: "₹100" },
@@ -123,7 +132,6 @@ export default function CheckoutPage() {
     }
   }, [items, setLocation]);
 
-  // Generate dates for next 7 days
   const getNextDates = () => {
     const dates = [];
     for (let i = 0; i < 7; i++) {
@@ -134,20 +142,33 @@ export default function CheckoutPage() {
         day: date.toLocaleDateString('en-US', { weekday: 'short' }),
         date: date.getDate().toString().padStart(2, '0'),
         month: date.toLocaleDateString('en-US', { month: 'short' }),
-        full: date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+        full: date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+        isToday: i === 0
       });
     }
     return dates;
   };
 
-  const timeSlots = [
-    "08:00 AM", "08:30 AM", "09:00 AM",
-    "09:30 AM", "10:00 AM", "10:30 AM",
-    "11:00 AM", "11:30 AM", "12:00 PM",
-    "12:30 PM", "01:00 PM", "01:30 PM",
-    "02:00 PM", "02:30 PM", "03:00 PM",
-    "03:30 PM", "04:00 PM"
+  const timeSlotRanges = [
+    { id: "slot-1", label: "08:00 AM - 10:00 AM", startHour: 8 },
+    { id: "slot-2", label: "10:00 AM - 12:00 PM", startHour: 10 },
+    { id: "slot-3", label: "12:00 PM - 02:00 PM", startHour: 12 },
+    { id: "slot-4", label: "02:00 PM - 04:00 PM", startHour: 14 },
+    { id: "slot-5", label: "04:00 PM - 06:00 PM", startHour: 16 },
+    { id: "slot-6", label: "06:00 PM - 08:00 PM", startHour: 18 },
   ];
+
+  const getAvailableTimeSlots = () => {
+    if (selectedDateIndex === null) return timeSlotRanges;
+    
+    if (selectedDateIndex === 0) {
+      const currentHour = new Date().getHours();
+      const bufferHours = 2;
+      return timeSlotRanges.filter(slot => slot.startHour > currentHour + bufferHours);
+    }
+    
+    return timeSlotRanges;
+  };
 
   const handleOpenSlotModal = () => {
     setSlotModalOpen(true);
@@ -156,7 +177,13 @@ export default function CheckoutPage() {
     setTimeout(() => {
       setLoadingSlots(false);
       setSlotsLoaded(true);
-    }, 1500);
+    }, 1200);
+  };
+
+  const handleSelectDate = (date: typeof dates[0], index: number) => {
+    setSelectedDate(date.full);
+    setSelectedDateIndex(index);
+    setSelectedTime(null);
   };
 
   const handleConfirmSlot = () => {
@@ -182,14 +209,12 @@ export default function CheckoutPage() {
 
     setLoading(true);
     try {
-      // Check if Razorpay is loaded
       if (!(window as any).Razorpay) {
         const script = document.createElement("script");
         script.src = "https://checkout.razorpay.com/v1/checkout.js";
         script.async = true;
         document.body.appendChild(script);
         
-        // Wait for script to load
         await new Promise((resolve) => {
           script.onload = resolve;
         });
@@ -223,6 +248,7 @@ export default function CheckoutPage() {
           tip: tipAmount,
           address: selectedAddress,
           slot: !isProductsOnly ? { date: selectedDate, time: selectedTime } : null,
+          avoidCalling: avoidCalling,
           idempotencyKey: `checkout_${Date.now()}_${user?.id}_${totalAmount}`
         })
       });
@@ -275,6 +301,7 @@ export default function CheckoutPage() {
   };
 
   const dates = getNextDates();
+  const availableTimeSlots = getAvailableTimeSlots();
   const canProceed = selectedAddress && (isProductsOnly || (selectedDate && selectedTime));
 
   return (
@@ -288,11 +315,9 @@ export default function CheckoutPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Left Column - Single Card */}
             <div className="lg:col-span-7">
               <Card className="border-none shadow-lg overflow-hidden">
                 <CardContent className="p-0">
-                  {/* Contact Info */}
                   <div className="p-5 flex items-center gap-4">
                     <div className="h-8 w-8 bg-gray-100 rounded-full flex items-center justify-center shrink-0">
                       <MapPin className="h-4 w-4 text-gray-500" />
@@ -305,7 +330,6 @@ export default function CheckoutPage() {
 
                   <Separator />
 
-                  {/* Address */}
                   <div className="p-5">
                     <div className="flex items-center gap-4">
                       <div className="h-8 w-8 bg-gray-100 rounded-full flex items-center justify-center shrink-0">
@@ -330,7 +354,7 @@ export default function CheckoutPage() {
                     {!selectedAddress && (
                       <Button 
                         onClick={() => setAddressModalOpen(true)}
-                        className="w-full mt-4 bg-primary hover:bg-primary/90 h-11 font-semibold rounded-lg"
+                        className="w-full mt-4 bg-violet-600 hover:bg-violet-700 h-11 font-semibold rounded-lg text-white"
                       >
                         Select address
                       </Button>
@@ -339,7 +363,6 @@ export default function CheckoutPage() {
 
                   <Separator />
 
-                  {/* Slot - Only for services */}
                   {!isProductsOnly && (
                     <>
                       <div className="p-5">
@@ -349,8 +372,10 @@ export default function CheckoutPage() {
                           </div>
                           <div className="flex-1">
                             <p className="text-sm font-medium text-gray-900">Slot</p>
-                            {selectedDate && selectedTime && (
+                            {selectedDate && selectedTime ? (
                               <p className="text-sm text-gray-500">{selectedDate} - {selectedTime}</p>
+                            ) : (
+                              <p className="text-sm text-gray-400">Select time & date</p>
                             )}
                           </div>
                           {selectedDate && selectedTime && (
@@ -373,7 +398,6 @@ export default function CheckoutPage() {
                     </>
                   )}
 
-                  {/* Delivery Info - Only for products */}
                   {isProductsOnly && (
                     <>
                       <div className="p-5 flex items-center gap-4">
@@ -389,7 +413,6 @@ export default function CheckoutPage() {
                     </>
                   )}
 
-                  {/* Payment Method */}
                   <div className="p-5 flex items-center gap-4">
                     <div className="h-8 w-8 bg-gray-100 rounded-full flex items-center justify-center shrink-0">
                       <CreditCard className="h-4 w-4 text-gray-500" />
@@ -399,12 +422,11 @@ export default function CheckoutPage() {
                     </div>
                   </div>
 
-                  {/* Proceed Button */}
                   <div className="px-5 pb-5">
                     <Button 
                       onClick={handleCheckout}
                       disabled={loading || !canProceed}
-                      className="w-full bg-violet-600 hover:bg-violet-700 h-12 font-semibold text-white rounded-lg disabled:opacity-50"
+                      className="w-full bg-violet-600 hover:bg-violet-700 h-12 font-semibold text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Proceed to pay"}
                     </Button>
@@ -418,7 +440,6 @@ export default function CheckoutPage() {
                 </CardContent>
               </Card>
 
-              {/* Policy Card */}
               <Card className="border-none shadow-sm mt-4 overflow-hidden">
                 <CardContent className="p-5">
                   <h3 className="font-semibold text-gray-900 mb-2">
@@ -440,9 +461,7 @@ export default function CheckoutPage() {
               </Card>
             </div>
 
-            {/* Right Column - Three Cards */}
             <div className="lg:col-span-5 space-y-4">
-              {/* Card 1: Items + Frequently Added */}
               <Card className="border-none shadow-lg overflow-hidden">
                 <CardContent className="p-0">
                   <div className="p-5 space-y-4 max-h-[280px] overflow-y-auto">
@@ -487,16 +506,21 @@ export default function CheckoutPage() {
                   <div className="p-5 bg-gray-50/50">
                     <p className="text-sm font-semibold text-gray-700 mb-3">Frequently added together</p>
                     <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-                      {frequentlyAdded.map((item) => (
-                        <div key={item.id} className="shrink-0 flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-xl min-w-[180px]">
+                      {frequentlyAdded.filter(fa => !items.some(i => i.id === fa.id)).slice(0, 4).map((item) => (
+                        <div key={item.id} className="shrink-0 flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-xl min-w-[200px]">
                           <div className="h-10 w-10 bg-gray-100 rounded-lg flex items-center justify-center">
                             <Package className="h-5 w-5 text-gray-400" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">{item.name}</p>
+                            <p className="text-sm font-medium truncate">{item.title}</p>
                             <p className="text-sm font-bold text-primary">₹{item.price}</p>
                           </div>
-                          <button className="text-violet-600 text-sm font-semibold">Add</button>
+                          <button 
+                            onClick={() => handleAddFrequentItem(item)}
+                            className="text-violet-600 text-sm font-semibold hover:text-violet-700 px-2 py-1 rounded hover:bg-violet-50"
+                          >
+                            Add
+                          </button>
                         </div>
                       ))}
                     </div>
@@ -522,7 +546,6 @@ export default function CheckoutPage() {
                 </CardContent>
               </Card>
 
-              {/* Card 2: Coupons */}
               <Card className="border-none shadow-lg overflow-hidden cursor-pointer hover:shadow-xl transition-shadow" onClick={() => setCouponModalOpen(true)}>
                 <CardContent className="p-5">
                   <div className="flex items-center justify-between">
@@ -535,7 +558,6 @@ export default function CheckoutPage() {
                 </CardContent>
               </Card>
 
-              {/* Card 3: Payment Summary + Tip */}
               <Card className="border-none shadow-lg overflow-hidden">
                 <CardContent className="p-0">
                   <div className="p-5 space-y-3">
@@ -582,8 +604,7 @@ export default function CheckoutPage() {
                     </div>
                   </div>
 
-                  {/* Tip Section - Only for services */}
-                  {!isProductsOnly && (
+                  {hasServices && (
                     <>
                       <Separator />
                       <div className="p-5">
@@ -642,7 +663,6 @@ export default function CheckoutPage() {
       </main>
       <Footer />
 
-      {/* Address Modal */}
       <AddressModal
         open={addressModalOpen}
         onOpenChange={setAddressModalOpen}
@@ -652,9 +672,9 @@ export default function CheckoutPage() {
         onDeleteAddress={deleteAddress}
       />
 
-      {/* Slot Selection Modal */}
       <Dialog open={slotModalOpen} onOpenChange={setSlotModalOpen}>
         <DialogContent className="max-w-lg p-0 gap-0">
+          <DialogDescription className="sr-only">Select a date and time slot for your service</DialogDescription>
           <AnimatePresence mode="wait">
             {loadingSlots ? (
               <motion.div 
@@ -683,18 +703,19 @@ export default function CheckoutPage() {
                 </DialogHeader>
 
                 <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-                  {dates.slice(0, 5).map((date) => (
+                  {dates.slice(0, 5).map((date, index) => (
                     <button
                       key={date.id}
-                      onClick={() => setSelectedDate(date.full)}
-                      className={`flex flex-col items-center justify-center min-w-[70px] p-3 rounded-lg border-2 transition-all ${
+                      onClick={() => handleSelectDate(date, index)}
+                      className={`flex flex-col items-center justify-center min-w-[70px] p-3 rounded-xl border-2 transition-all ${
                         selectedDate === date.full 
-                          ? 'border-gray-900 bg-gray-900 text-white' 
-                          : 'border-gray-200 bg-white hover:border-gray-300'
+                          ? 'border-violet-600 bg-violet-600 text-white' 
+                          : 'border-gray-200 bg-white hover:border-violet-300'
                       }`}
                     >
-                      <span className="text-xs font-medium">{date.day}</span>
+                      <span className="text-xs font-medium">{date.isToday ? "Today" : date.day}</span>
                       <span className="text-lg font-bold">{date.date}</span>
+                      <span className="text-[10px]">{date.month}</span>
                     </button>
                   ))}
                 </div>
@@ -706,31 +727,34 @@ export default function CheckoutPage() {
 
                 <h4 className="font-semibold text-gray-900 mb-3">Select start time of service</h4>
 
-                <div className="grid grid-cols-3 gap-2 max-h-[250px] overflow-y-auto mb-6">
-                  {timeSlots.map((slot, idx) => (
-                    <button
-                      key={slot}
-                      onClick={() => setSelectedTime(slot)}
-                      className={`p-3 rounded-lg border text-sm font-medium transition-all relative ${
-                        selectedTime === slot 
-                          ? 'border-gray-900 bg-gray-900 text-white' 
-                          : 'border-gray-200 bg-white hover:border-gray-300 text-gray-700'
-                      }`}
-                    >
-                      {idx === 1 && (
-                        <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[10px] text-green-600 font-semibold">
-                          + ₹100
-                        </span>
-                      )}
-                      {slot}
-                    </button>
-                  ))}
-                </div>
+                {availableTimeSlots.length === 0 ? (
+                  <div className="p-6 text-center text-gray-500 bg-gray-50 rounded-xl">
+                    <Clock className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                    <p className="font-medium">No slots available for today</p>
+                    <p className="text-sm">Please select another date</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3 mb-6">
+                    {availableTimeSlots.map((slot) => (
+                      <button
+                        key={slot.id}
+                        onClick={() => setSelectedTime(slot.label)}
+                        className={`p-4 rounded-xl border-2 text-sm font-medium transition-all ${
+                          selectedTime === slot.label 
+                            ? 'border-violet-600 bg-violet-600 text-white' 
+                            : 'border-gray-200 bg-white hover:border-violet-300 text-gray-700'
+                        }`}
+                      >
+                        {slot.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
 
                 <Button 
                   onClick={handleConfirmSlot}
                   disabled={!selectedDate || !selectedTime}
-                  className="w-full bg-violet-600 hover:bg-violet-700 h-12 font-semibold rounded-lg disabled:opacity-50"
+                  className="w-full bg-violet-600 hover:bg-violet-700 h-12 font-semibold rounded-xl disabled:opacity-50"
                 >
                   Proceed to checkout
                 </Button>
@@ -740,11 +764,11 @@ export default function CheckoutPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Policy Modal */}
       <Dialog open={policyModalOpen} onOpenChange={setPolicyModalOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>{isProductsOnly ? "Return & Refund Policy" : "Cancellation & Refund Policy"}</DialogTitle>
+            <DialogDescription className="sr-only">Policy information</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 text-sm text-gray-600">
             {isProductsOnly ? (
@@ -786,11 +810,11 @@ export default function CheckoutPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Breakup Modal */}
       <Dialog open={breakupModalOpen} onOpenChange={setBreakupModalOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>Price Breakup</DialogTitle>
+            <DialogDescription className="sr-only">Detailed price breakdown</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             {items.map((item) => (
@@ -833,11 +857,11 @@ export default function CheckoutPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Coupons Modal */}
       <Dialog open={couponModalOpen} onOpenChange={setCouponModalOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Available Offers</DialogTitle>
+            <DialogDescription className="sr-only">Available coupon codes and offers</DialogDescription>
           </DialogHeader>
           <div className="space-y-3 max-h-[400px] overflow-y-auto">
             {coupons.map((coupon, idx) => (

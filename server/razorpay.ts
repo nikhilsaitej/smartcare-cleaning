@@ -47,7 +47,11 @@ export interface CreateOrderParams {
   currency?: string;
   receipt: string;
   userId: string;
-  items: Array<{ productId: string; quantity: number; price: number }>;
+  items: Array<{ productId: string; quantity: number; price: number; category?: string }>;
+  tip?: number;
+  address?: any;
+  slot?: any;
+  avoidCalling?: boolean;
   idempotencyKey: string;
 }
 
@@ -93,6 +97,10 @@ export const createOrder = async (params: CreateOrderParams) => {
       currency: params.currency || "INR",
       status: "created",
       items: params.items,
+      tip: params.tip || 0,
+      address: params.address || null,
+      slot: params.slot || null,
+      avoid_calling: params.avoidCalling || false,
       idempotency_key: params.idempotencyKey,
     }]);
 

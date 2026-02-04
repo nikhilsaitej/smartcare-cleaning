@@ -113,6 +113,7 @@ export const schemas = {
     tip: z.number().min(0).max(10000).optional(),
     address: z.any().optional(),
     slot: z.any().optional(),
+    avoidCalling: z.boolean().optional(),
     idempotencyKey: z.string().min(10).max(100)
   }),
 
