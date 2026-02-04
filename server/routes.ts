@@ -1,6 +1,6 @@
 import type { Express, Request, Response } from "express";
 import { type Server } from "http";
-import { supabase } from "./supabase";
+import { supabase, supabaseAdmin } from "./supabase";
 import { sendContactConfirmationEmail, sendBookingConfirmationEmail, sendWelcomeEmail, sendPasswordResetEmail, sendOrderConfirmationEmail, sendAdminOrderNotificationEmail } from "./resend";
 import { sendBookingSMS, sendBookingWhatsApp, sendOTP } from "./twilio";
 import { 
@@ -289,7 +289,7 @@ export async function registerRoutes(
   }));
 
   app.get("/api/admin/contacts", adminLimiter, verifyAdmin, asyncHandler(async (req: Request, res: Response) => {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from("contacts")
       .select("*")
       .order("created_at", { ascending: false });
@@ -301,7 +301,7 @@ export async function registerRoutes(
   app.delete("/api/admin/contacts/:id", adminLimiter, verifyAdmin, validateParams(schemas.uuidParam), asyncHandler(async (req: Request, res: Response) => {
     const admin = (req as any).user;
     
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from("contacts")
       .delete()
       .eq("id", req.params.id);
@@ -313,7 +313,7 @@ export async function registerRoutes(
   }));
 
   app.get("/api/admin/bookings", adminLimiter, verifyAdmin, asyncHandler(async (req: Request, res: Response) => {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from("bookings")
       .select("*")
       .order("created_at", { ascending: false });
@@ -325,7 +325,7 @@ export async function registerRoutes(
   app.patch("/api/admin/bookings/:id", adminLimiter, verifyAdmin, validateParams(schemas.uuidParam), validate(schemas.bookingStatusUpdate), asyncHandler(async (req: Request, res: Response) => {
     const admin = (req as any).user;
     
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from("bookings")
       .update({ status: req.body.status })
       .eq("id", req.params.id)
@@ -341,7 +341,7 @@ export async function registerRoutes(
   app.delete("/api/admin/bookings/:id", adminLimiter, verifyAdmin, validateParams(schemas.uuidParam), asyncHandler(async (req: Request, res: Response) => {
     const admin = (req as any).user;
     
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from("bookings")
       .delete()
       .eq("id", req.params.id);
@@ -353,7 +353,7 @@ export async function registerRoutes(
   }));
 
   app.get("/api/admin/products", adminLimiter, verifyAdmin, asyncHandler(async (req: Request, res: Response) => {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from("products")
       .select("*")
       .order("created_at", { ascending: false });
@@ -365,7 +365,7 @@ export async function registerRoutes(
   app.post("/api/admin/products", adminLimiter, verifyAdmin, validate(schemas.product), asyncHandler(async (req: Request, res: Response) => {
     const admin = (req as any).user;
     
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from("products")
       .insert([req.body])
       .select()
@@ -380,7 +380,7 @@ export async function registerRoutes(
   app.patch("/api/admin/products/:id", adminLimiter, verifyAdmin, validateParams(schemas.uuidParam), validate(schemas.productUpdate), asyncHandler(async (req: Request, res: Response) => {
     const admin = (req as any).user;
     
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from("products")
       .update(req.body)
       .eq("id", req.params.id)
@@ -396,7 +396,7 @@ export async function registerRoutes(
   app.delete("/api/admin/products/:id", adminLimiter, verifyAdmin, validateParams(schemas.uuidParam), asyncHandler(async (req: Request, res: Response) => {
     const admin = (req as any).user;
     
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from("products")
       .delete()
       .eq("id", req.params.id);
@@ -408,7 +408,7 @@ export async function registerRoutes(
   }));
 
   app.get("/api/admin/services", adminLimiter, verifyAdmin, asyncHandler(async (req: Request, res: Response) => {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from("services")
       .select("*")
       .order("created_at", { ascending: false });
@@ -420,7 +420,7 @@ export async function registerRoutes(
   app.post("/api/admin/services", adminLimiter, verifyAdmin, validate(schemas.service), asyncHandler(async (req: Request, res: Response) => {
     const admin = (req as any).user;
     
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from("services")
       .insert([req.body])
       .select()
@@ -435,7 +435,7 @@ export async function registerRoutes(
   app.patch("/api/admin/services/:id", adminLimiter, verifyAdmin, validateParams(schemas.uuidParam), validate(schemas.serviceUpdate), asyncHandler(async (req: Request, res: Response) => {
     const admin = (req as any).user;
     
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from("services")
       .update(req.body)
       .eq("id", req.params.id)
@@ -451,7 +451,7 @@ export async function registerRoutes(
   app.delete("/api/admin/services/:id", adminLimiter, verifyAdmin, validateParams(schemas.uuidParam), asyncHandler(async (req: Request, res: Response) => {
     const admin = (req as any).user;
     
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from("services")
       .delete()
       .eq("id", req.params.id);
@@ -643,22 +643,27 @@ export async function registerRoutes(
   }));
 
   app.get("/api/admin/orders", adminLimiter, verifyAdmin, asyncHandler(async (req: Request, res: Response) => {
-    const { data, error } = await supabase
+    // Use supabaseAdmin to bypass RLS and get all orders
+    const { data, error } = await supabaseAdmin
       .from("orders")
       .select("*")
       .order("created_at", { ascending: false });
     
-    if (error) return res.json([]);
+    if (error) {
+      console.error("Error fetching admin orders:", error);
+      return res.json([]);
+    }
     res.json(data || []);
   }));
 
   app.get("/api/admin/stats", adminLimiter, verifyAdmin, asyncHandler(async (req: Request, res: Response) => {
+    // Use supabaseAdmin for admin stats to bypass RLS
     const [contactsRes, bookingsRes, productsRes, servicesRes, ordersRes] = await Promise.all([
-      supabase.from("contacts").select("*", { count: "exact", head: true }),
-      supabase.from("bookings").select("*", { count: "exact", head: true }),
-      supabase.from("products").select("*", { count: "exact", head: true }),
-      supabase.from("services").select("*", { count: "exact", head: true }),
-      supabase.from("orders").select("*", { count: "exact", head: true }),
+      supabaseAdmin.from("contacts").select("*", { count: "exact", head: true }),
+      supabaseAdmin.from("bookings").select("*", { count: "exact", head: true }),
+      supabaseAdmin.from("products").select("*", { count: "exact", head: true }),
+      supabaseAdmin.from("services").select("*", { count: "exact", head: true }),
+      supabaseAdmin.from("orders").select("*", { count: "exact", head: true }),
     ]);
 
     res.json({
