@@ -57,6 +57,7 @@ export default function CheckoutPage() {
 
   const [selectedTip, setSelectedTip] = useState<number | null>(null);
   const [customTip, setCustomTip] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discountPercent?: number; flatDiscount?: number; maxDiscount: number } | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -86,7 +87,56 @@ export default function CheckoutPage() {
   const taxes = Math.round(subtotal * 0.05);
   const platformFee = 10;
   const deliveryFee = subtotal > 1000 ? 0 : (isProductsOnly ? 40 : 50);
-  const totalAmount = subtotal + taxes + platformFee + deliveryFee + tipAmount;
+  
+  const couponDiscount = useMemo(() => {
+    if (!appliedCoupon) return 0;
+    if (appliedCoupon.flatDiscount) {
+      return Math.min(appliedCoupon.flatDiscount, appliedCoupon.maxDiscount);
+    }
+    if (appliedCoupon.discountPercent) {
+      const discount = Math.round(subtotal * appliedCoupon.discountPercent / 100);
+      return Math.min(discount, appliedCoupon.maxDiscount);
+    }
+    return 0;
+  }, [appliedCoupon, subtotal]);
+
+  const totalAmount = subtotal + taxes + platformFee + deliveryFee + tipAmount - couponDiscount;
+
+  const handleTipClick = (amount: number) => {
+    if (selectedTip === amount) {
+      setSelectedTip(null);
+      setCustomTip("");
+    } else {
+      setSelectedTip(amount);
+      setCustomTip("");
+    }
+  };
+
+  const handleApplyCoupon = (coupon: typeof coupons[0]) => {
+    let discountPercent: number | undefined;
+    let flatDiscount: number | undefined;
+    const maxDiscount = parseInt(coupon.maxDiscount.replace("₹", ""));
+
+    if (coupon.discount.includes("% off")) {
+      discountPercent = parseInt(coupon.discount.replace("% off", ""));
+    } else if (coupon.discount.includes("₹")) {
+      flatDiscount = parseInt(coupon.discount.replace("₹", "").replace(" off", ""));
+    }
+
+    if (coupon.code === "SMART100" && subtotal < 999) {
+      toast({ title: "Coupon not applicable", description: "This coupon is valid for orders above ₹999", variant: "destructive" });
+      return;
+    }
+
+    setAppliedCoupon({ code: coupon.code, discountPercent, flatDiscount, maxDiscount });
+    setCouponModalOpen(false);
+    toast({ title: "Coupon applied!", description: `${coupon.code} - ${coupon.discount}` });
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    toast({ title: "Coupon removed" });
+  };
 
   const frequentlyAdded = useMemo(() => {
     if (hasServices) {
@@ -547,14 +597,32 @@ export default function CheckoutPage() {
                 </CardContent>
               </Card>
 
-              <Card className="border-none shadow-lg overflow-hidden cursor-pointer hover:shadow-xl transition-shadow" onClick={() => setCouponModalOpen(true)}>
+              <Card className={`border-none shadow-lg overflow-hidden cursor-pointer hover:shadow-xl transition-shadow ${appliedCoupon ? 'ring-2 ring-green-500' : ''}`} onClick={() => setCouponModalOpen(true)}>
                 <CardContent className="p-5">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <Percent className="h-5 w-5 text-green-600" />
-                      <span className="font-semibold text-gray-900">Coupons and offers</span>
+                      <Percent className={`h-5 w-5 ${appliedCoupon ? 'text-green-600' : 'text-gray-500'}`} />
+                      {appliedCoupon ? (
+                        <div>
+                          <span className="font-semibold text-green-600">{appliedCoupon.code} applied</span>
+                          <p className="text-sm text-green-600">You save ₹{couponDiscount}</p>
+                        </div>
+                      ) : (
+                        <span className="font-semibold text-gray-900">Coupons and offers</span>
+                      )}
                     </div>
-                    <span className="text-violet-600 font-semibold text-sm">{coupons.length} offers &gt;</span>
+                    {appliedCoupon ? (
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                        onClick={(e) => { e.stopPropagation(); handleRemoveCoupon(); }}
+                      >
+                        Remove
+                      </Button>
+                    ) : (
+                      <span className="text-violet-600 font-semibold text-sm">{coupons.length} offers &gt;</span>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -594,14 +662,19 @@ export default function CheckoutPage() {
                         <span className="font-medium text-green-600">₹{tipAmount}</span>
                       </div>
                     )}
+                    {couponDiscount > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-green-600 flex items-center gap-1">
+                          <Percent className="h-3.5 w-3.5" />
+                          Coupon discount ({appliedCoupon?.code})
+                        </span>
+                        <span className="font-medium text-green-600">-₹{couponDiscount}</span>
+                      </div>
+                    )}
                     <Separator className="my-2" />
                     <div className="flex justify-between font-bold text-gray-900">
-                      <span>Total amount</span>
-                      <span>₹{totalAmount}</span>
-                    </div>
-                    <div className="flex justify-between font-bold text-gray-900">
                       <span>Amount to pay</span>
-                      <span>₹{totalAmount}</span>
+                      <span className="text-violet-600">₹{totalAmount}</span>
                     </div>
                   </div>
 
@@ -614,7 +687,7 @@ export default function CheckoutPage() {
                           {[50, 75, 100].map((amount) => (
                             <button
                               key={amount}
-                              onClick={() => { setSelectedTip(amount); setCustomTip(""); }}
+                              onClick={() => handleTipClick(amount)}
                               className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all relative ${
                                 selectedTip === amount 
                                   ? 'border-gray-900 bg-gray-900 text-white' 
@@ -866,19 +939,38 @@ export default function CheckoutPage() {
           </DialogHeader>
           <div className="space-y-3 max-h-[400px] overflow-y-auto">
             {coupons.map((coupon, idx) => (
-              <div key={idx} className="p-4 border border-gray-200 rounded-xl hover:border-violet-300 transition-colors">
+              <div key={idx} className={`p-4 border rounded-xl transition-colors ${appliedCoupon?.code === coupon.code ? 'border-green-500 bg-green-50' : 'border-gray-200 hover:border-violet-300'}`}>
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <Badge className="bg-green-100 text-green-700 hover:bg-green-100">{coupon.discount}</Badge>
+                      {appliedCoupon?.code === coupon.code && (
+                        <Badge className="bg-green-500 text-white">Applied</Badge>
+                      )}
                     </div>
                     <p className="font-semibold text-gray-900">{coupon.code}</p>
                     <p className="text-sm text-gray-500">{coupon.description}</p>
                     <p className="text-xs text-gray-400 mt-1">Max discount: {coupon.maxDiscount}</p>
                   </div>
-                  <Button variant="outline" size="sm" className="text-violet-600 border-violet-200">
-                    Apply
-                  </Button>
+                  {appliedCoupon?.code === coupon.code ? (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="text-red-600 border-red-200 hover:bg-red-50"
+                      onClick={handleRemoveCoupon}
+                    >
+                      Remove
+                    </Button>
+                  ) : (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="text-violet-600 border-violet-200"
+                      onClick={() => handleApplyCoupon(coupon)}
+                    >
+                      Apply
+                    </Button>
+                  )}
                 </div>
               </div>
             ))}
