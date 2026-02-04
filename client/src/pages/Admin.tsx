@@ -69,7 +69,7 @@ interface Order {
   amount: number;
   currency: string;
   status: string;
-  items: Array<{ productId: string; quantity: number; price: number; category?: string }>;
+  items: Array<{ productId: string; name?: string; quantity: number; price: number; category?: string }>;
   tip?: number;
   address?: {
     fullAddress: string;
@@ -522,9 +522,18 @@ export default function Admin() {
                                   <Package className="h-4 w-4" /> Order Items
                                 </p>
                                 {order.items?.map((item, idx) => (
-                                  <p key={idx} className="text-gray-600 text-xs">
-                                    {item.quantity}x {item.category || 'Item'} - ₹{item.price}
-                                  </p>
+                                  <div key={idx} className="text-gray-600 text-xs mb-1">
+                                    <span className="font-medium">{item.quantity}x</span> {item.name || item.category || 'Item'}
+                                    <span className="ml-2 text-gray-500">@ ₹{item.price}</span>
+                                    <span className="ml-1 font-medium">= ₹{item.price * item.quantity}</span>
+                                    {item.category && (
+                                      <span className={`ml-2 text-[10px] px-1.5 py-0.5 rounded ${
+                                        item.category === 'Service' ? 'bg-violet-100 text-violet-600' : 'bg-blue-100 text-blue-600'
+                                      }`}>
+                                        {item.category}
+                                      </span>
+                                    )}
+                                  </div>
                                 ))}
                               </div>
                             </div>

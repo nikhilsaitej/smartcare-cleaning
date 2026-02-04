@@ -106,6 +106,7 @@ export const schemas = {
   createOrder: z.object({
     items: z.array(z.object({
       productId: z.string(),
+      name: z.string().min(1).max(200),
       quantity: z.number().int().min(1).max(100),
       price: z.number().positive(),
       category: z.string().optional()

@@ -1,6 +1,6 @@
 import Razorpay from "razorpay";
 import crypto from "crypto";
-import { supabase } from "./supabase";
+import { supabase, supabaseAdmin } from "./supabase";
 import { auditLog } from "./security/auditLogger";
 
 if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
@@ -47,7 +47,7 @@ export interface CreateOrderParams {
   currency?: string;
   receipt: string;
   userId: string;
-  items: Array<{ productId: string; quantity: number; price: number; category?: string }>;
+  items: Array<{ productId: string; name: string; quantity: number; price: number; category?: string }>;
   tip?: number;
   address?: any;
   slot?: any;
@@ -88,7 +88,8 @@ export const createOrder = async (params: CreateOrderParams) => {
 
   const order = await razorpay.orders.create(options);
 
-  const { error: dbError } = await supabase
+  // Use supabaseAdmin to bypass RLS for order creation
+  const { error: dbError } = await supabaseAdmin
     .from("orders")
     .insert([{
       razorpay_order_id: order.id,
@@ -179,7 +180,8 @@ export const handlePaymentSuccess = async (
   paymentId: string,
   userId: string
 ) => {
-  const { data, error } = await supabase
+  // Use supabaseAdmin to bypass RLS for order updates
+  const { data, error } = await supabaseAdmin
     .from("orders")
     .update({
       status: "paid",
@@ -223,7 +225,8 @@ export const handleWebhookEvent = async (event: any) => {
   switch (eventType) {
     case "payment.captured":
       const payment = payload.payment.entity;
-      await supabase
+      // Use supabaseAdmin for webhook order updates
+      await supabaseAdmin
         .from("orders")
         .update({
           status: "captured",
@@ -235,7 +238,7 @@ export const handleWebhookEvent = async (event: any) => {
 
     case "payment.failed":
       const failedPayment = payload.payment.entity;
-      await supabase
+      await supabaseAdmin
         .from("orders")
         .update({
           status: "failed",
@@ -251,7 +254,7 @@ export const handleWebhookEvent = async (event: any) => {
 
     case "refund.created":
       const refund = payload.refund.entity;
-      await supabase
+      await supabaseAdmin
         .from("orders")
         .update({
           status: "refunded",
