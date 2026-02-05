@@ -2,8 +2,8 @@ import { v2 as cloudinary } from 'cloudinary';
 import { auditLog } from './security/auditLogger';
 
 // Configure using the CLOUDINARY_URL environment variable if it exists,
-// otherwise fall back to individual components.
-if (process.env.CLOUDINARY_URL) {
+// otherwise use individual components.
+if (process.env.CLOUDINARY_URL && !process.env.CLOUDINARY_URL.includes('<your_api_key>')) {
   cloudinary.config({
     cloudinary_url: process.env.CLOUDINARY_URL,
     secure: true
@@ -27,9 +27,13 @@ export const getCloudinarySignature = (folder: string = 'smartcare') => {
   // Get credentials for the response
   const config = cloudinary.config();
   
+  if (!config.api_secret) {
+    throw new Error('Cloudinary API Secret is not configured');
+  }
+
   const signature = cloudinary.utils.api_sign_request(
     { timestamp, folder },
-    config.api_secret!
+    config.api_secret
   );
 
   return {
