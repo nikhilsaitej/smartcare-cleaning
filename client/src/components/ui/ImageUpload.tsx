@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Upload, X, CheckCircle2, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ImageUploadProps {
   onUploadSuccess: (url: string) => void;
@@ -20,12 +21,12 @@ export default function ImageUpload({
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(defaultImage || null);
   const { toast } = useToast();
+  const { session } = useAuth();
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       toast({
         title: "Invalid file type",
@@ -35,7 +36,6 @@ export default function ImageUpload({
       return;
     }
 
-    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       toast({
         title: "File too large",
@@ -48,9 +48,7 @@ export default function ImageUpload({
     setUploading(true);
 
     try {
-      // 1. Get signed signature from backend
-      const session = JSON.parse(localStorage.getItem("supabase.auth.token") || "{}");
-      const token = session?.currentSession?.access_token;
+      const token = session?.access_token;
 
       if (!token) {
         throw new Error("Authentication required");
@@ -62,11 +60,18 @@ export default function ImageUpload({
         }
       });
 
-      if (!sigRes.ok) throw new Error("Failed to get upload signature");
+      if (!sigRes.ok) {
+        const errorText = await sigRes.text();
+        console.error("Signature error:", errorText);
+        throw new Error("Failed to get upload signature");
+      }
       
       const { signature, timestamp, apiKey, cloudName } = await sigRes.json();
 
-      // 2. Upload directly to Cloudinary
+      if (!cloudName || !apiKey || !signature) {
+        throw new Error("Cloudinary not configured properly");
+      }
+
       const formData = new FormData();
       formData.append("file", file);
       formData.append("signature", signature);
@@ -82,7 +87,11 @@ export default function ImageUpload({
         }
       );
 
-      if (!uploadRes.ok) throw new Error("Cloudinary upload failed");
+      if (!uploadRes.ok) {
+        const errorData = await uploadRes.json();
+        console.error("Cloudinary upload error:", errorData);
+        throw new Error("Cloudinary upload failed");
+      }
       
       const data = await uploadRes.json();
       setPreview(data.secure_url);
