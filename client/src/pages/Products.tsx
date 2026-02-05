@@ -43,7 +43,18 @@ export default function ProductsPage() {
       const res = await fetch("/api/products");
       if (res.ok) {
         const data = await res.json();
-        setProducts(data);
+        const mappedProducts = data.map((p: any) => ({
+          id: p.id,
+          title: p.name || p.title,
+          category: p.category || "Other",
+          price: p.price,
+          original_price: p.original_price,
+          rating: p.rating || 4.5,
+          image: p.image_url || p.image,
+          tag: p.is_bestseller ? "Bestseller" : p.tag,
+          stock: p.stock
+        }));
+        setProducts(mappedProducts);
       }
     } catch (error) {
       console.error("Failed to fetch products:", error);

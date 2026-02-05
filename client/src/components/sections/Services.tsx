@@ -29,12 +29,12 @@ export default function Services() {
         const data = await res.json();
         const formattedServices = data.map((s: any) => ({
           id: s.id,
-          title: s.title,
-          description: s.description,
+          title: s.name || s.title,
+          description: s.description || "",
           price: s.price?.toString().startsWith("From") ? s.price : `From ₹${s.price}`,
           rating: s.rating || 4.8,
           reviews: s.reviews || 0,
-          image: s.image,
+          image: s.image_url || s.image,
           features: s.features || []
         }));
         setServices(formattedServices);

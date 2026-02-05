@@ -28,7 +28,17 @@ export default function Products() {
       const res = await fetch("/api/products");
       if (res.ok) {
         const data = await res.json();
-        const sortedProducts = data
+        const mappedProducts = data.map((p: any) => ({
+          id: p.id,
+          title: p.name || p.title,
+          category: p.category || "Other",
+          price: p.price,
+          original_price: p.original_price,
+          rating: p.rating || 4.5,
+          image: p.image_url || p.image,
+          tag: p.is_bestseller ? "Bestseller" : p.tag
+        }));
+        const sortedProducts = mappedProducts
           .sort((a: Product, b: Product) => {
             const tagPriority = (tag?: string) => tag === "Bestseller" ? 3 : tag === "Top Seller" ? 2 : tag === "Popular" ? 1 : 0;
             return tagPriority(b.tag) - tagPriority(a.tag) || (b.rating || 0) - (a.rating || 0);
