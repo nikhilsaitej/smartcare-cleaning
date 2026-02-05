@@ -692,5 +692,163 @@ export async function registerRoutes(
     }
   });
 
+  // ============================================
+  // RETURN/EXCHANGE REQUEST ENDPOINTS
+  // ============================================
+
+  // Get user's return requests
+  app.get("/api/return-requests", verifyToken, asyncHandler(async (req: Request, res: Response) => {
+    const userId = (req as any).user?.id;
+    const { data, error } = await supabase
+      .from("return_requests")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+    
+    if (error) {
+      console.error("Error fetching return requests:", error);
+      return res.json([]);
+    }
+    res.json(data || []);
+  }));
+
+  // Create a new return/exchange request
+  app.post("/api/return-requests", verifyToken, strictLimiter, asyncHandler(async (req: Request, res: Response) => {
+    const userId = (req as any).user?.id;
+    const userEmail = (req as any).user?.email;
+    const { 
+      order_id, 
+      request_type, 
+      items, 
+      reason, 
+      customer_name, 
+      customer_phone, 
+      pickup_address 
+    } = req.body;
+
+    // Validate required fields
+    if (!order_id || !request_type || !items || !reason) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    if (!['return', 'exchange'].includes(request_type)) {
+      return res.status(400).json({ error: "Invalid request type" });
+    }
+
+    // Verify the order belongs to this user and is delivered
+    const { data: order, error: orderError } = await supabaseAdmin
+      .from("orders")
+      .select("*")
+      .eq("id", order_id)
+      .eq("user_id", userId)
+      .single();
+
+    if (orderError || !order) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    if (order.status !== 'delivered') {
+      return res.status(400).json({ error: "Only delivered orders can be returned or exchanged" });
+    }
+
+    // Check if there's already a pending request for this order
+    const { data: existingRequest } = await supabaseAdmin
+      .from("return_requests")
+      .select("id")
+      .eq("order_id", order_id)
+      .in("status", ["pending", "approved", "processing"])
+      .single();
+
+    if (existingRequest) {
+      return res.status(400).json({ error: "A return/exchange request already exists for this order" });
+    }
+
+    // Calculate refund amount based on selected items
+    let refundAmount = 0;
+    const orderItems = order.items || [];
+    for (const item of items) {
+      const orderItem = orderItems.find((oi: any) => oi.productId === item.productId);
+      if (orderItem) {
+        refundAmount += (orderItem.price || 0) * (item.quantity || 1);
+      }
+    }
+
+    // Create the return request
+    const { data: returnRequest, error: insertError } = await supabaseAdmin
+      .from("return_requests")
+      .insert({
+        order_id,
+        user_id: userId,
+        request_type,
+        items,
+        reason,
+        customer_name,
+        customer_email: userEmail,
+        customer_phone,
+        pickup_address,
+        refund_amount: refundAmount,
+        status: "pending"
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error("Error creating return request:", insertError);
+      return res.status(500).json({ error: "Failed to create return request" });
+    }
+
+    // Log the return request creation
+    console.log(`[INFO] RETURN_REQUEST_CREATED: ${JSON.stringify({ requestId: returnRequest.id, orderId: order_id, type: request_type, userId })}`);
+
+    res.status(201).json(returnRequest);
+  }));
+
+  // Admin: Get all return requests
+  app.get("/api/admin/return-requests", adminLimiter, verifyAdmin, asyncHandler(async (req: Request, res: Response) => {
+    const { data, error } = await supabaseAdmin
+      .from("return_requests")
+      .select("*")
+      .order("created_at", { ascending: false });
+    
+    if (error) {
+      console.error("Error fetching admin return requests:", error);
+      return res.json([]);
+    }
+    res.json(data || []);
+  }));
+
+  // Admin: Update return request status
+  app.patch("/api/admin/return-requests/:id", adminLimiter, verifyAdmin, asyncHandler(async (req: Request, res: Response) => {
+    const id = req.params.id as string;
+    const { status, admin_notes, refund_status } = req.body;
+
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(id)) {
+      return res.status(400).json({ error: "Invalid request ID" });
+    }
+
+    const updateData: any = {};
+    if (status) updateData.status = status;
+    if (admin_notes !== undefined) updateData.admin_notes = admin_notes;
+    if (refund_status) updateData.refund_status = refund_status;
+    if (status === 'completed') updateData.processed_at = new Date().toISOString();
+
+    const { data, error } = await supabaseAdmin
+      .from("return_requests")
+      .update(updateData)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error updating return request:", error);
+      return res.status(500).json({ error: "Failed to update request" });
+    }
+
+    console.log(`[INFO] RETURN_REQUEST_UPDATED: ${JSON.stringify({ requestId: id, status })}`);
+
+    res.json(data);
+  }));
+
   return httpServer;
 }

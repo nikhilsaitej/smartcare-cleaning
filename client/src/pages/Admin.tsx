@@ -19,7 +19,7 @@ import {
   Plus, Pencil, Trash2, RefreshCw, Database, Send, MessageCircle, CheckCircle,
   ShoppingBag, Wrench, Settings, ExternalLink, ImageIcon, CreditCard, Eye,
   ChevronRight, IndianRupee, Cloud, ArrowUpRight, FileText, AlertCircle,
-  UserCircle, DollarSign, TrendingUp, X, Check
+  UserCircle, DollarSign, TrendingUp, X, Check, RotateCcw, ArrowRightLeft
 } from "lucide-react";
 import ImageUpload from "@/components/ui/ImageUpload";
 
@@ -100,12 +100,32 @@ interface Order {
   paid_at?: string;
 }
 
+interface ReturnRequest {
+  id: string;
+  order_id: string;
+  user_id: string;
+  request_type: "return" | "exchange";
+  status: string;
+  items: Array<{ productId: string; name?: string; quantity: number; price: number }>;
+  reason: string;
+  customer_name?: string;
+  customer_email?: string;
+  customer_phone?: string;
+  pickup_address?: any;
+  admin_notes?: string;
+  refund_amount?: number;
+  refund_status?: string;
+  created_at: string;
+  processed_at?: string;
+}
+
 interface Stats {
   contacts: number;
   bookings: number;
   products: number;
   services: number;
   orders: number;
+  returnRequests?: number;
   integrations: {
     supabase?: { status: string; url?: string };
     resend?: { status: string };
@@ -183,6 +203,7 @@ export default function Admin() {
   const [products, setProducts] = useState<Product[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [returnRequests, setReturnRequests] = useState<ReturnRequest[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -194,6 +215,8 @@ export default function Admin() {
   const [serviceDialogOpen, setServiceDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [orderDetailOpen, setOrderDetailOpen] = useState(false);
+  const [selectedReturnRequest, setSelectedReturnRequest] = useState<ReturnRequest | null>(null);
+  const [returnDetailOpen, setReturnDetailOpen] = useState(false);
 
   const isAdmin = user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
   
@@ -215,12 +238,13 @@ export default function Admin() {
     if (!session?.access_token) return;
     try {
       const headers = getAuthHeaders();
-      const [contactsRes, bookingsRes, productsRes, servicesRes, ordersRes, statsRes] = await Promise.all([
+      const [contactsRes, bookingsRes, productsRes, servicesRes, ordersRes, returnsRes, statsRes] = await Promise.all([
         fetch("/api/admin/contacts", { headers }),
         fetch("/api/admin/bookings", { headers }),
         fetch("/api/admin/products", { headers }),
         fetch("/api/admin/services", { headers }),
         fetch("/api/admin/orders", { headers }),
+        fetch("/api/admin/return-requests", { headers }),
         fetch("/api/admin/stats", { headers })
       ]);
       
@@ -229,6 +253,7 @@ export default function Admin() {
       if (productsRes.ok) setProducts(await productsRes.json());
       if (servicesRes.ok) setServices(await servicesRes.json());
       if (ordersRes.ok) setOrders(await ordersRes.json());
+      if (returnsRes.ok) setReturnRequests(await returnsRes.json());
       if (statsRes.ok) setStats(await statsRes.json());
     } catch (error) {
       console.error("Failed to fetch admin data:", error);
@@ -394,6 +419,25 @@ export default function Admin() {
     }
   };
 
+  const handleUpdateReturnRequest = async (id: string, status: string, adminNotes?: string) => {
+    try {
+      const res = await fetch(`/api/admin/return-requests/${id}`, {
+        method: "PATCH",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ status, admin_notes: adminNotes })
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setReturnRequests(returnRequests.map(r => r.id === id ? updated : r));
+        toast({ title: "Updated", description: `Request status changed to ${status}.` });
+        setReturnDetailOpen(false);
+      }
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to update request.", variant: "destructive" });
+    }
+  };
+
+  const pendingReturns = returnRequests.filter(r => r.status === 'pending').length;
   const newMessagesCount = contacts.length;
   const upcomingBookings = bookings.filter(b => b.status === 'pending' || b.status === 'confirmed').length;
   const inStockProducts = products.filter(p => p.in_stock !== false).length;
@@ -646,6 +690,14 @@ export default function Admin() {
                 </TabsTrigger>
                 <TabsTrigger value="services" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white rounded-lg">
                   <Wrench className="h-4 w-4" /> Services
+                </TabsTrigger>
+                <TabsTrigger value="returns" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white rounded-lg relative">
+                  <RotateCcw className="h-4 w-4" /> Returns
+                  {pendingReturns > 0 && (
+                    <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                      {pendingReturns}
+                    </span>
+                  )}
                 </TabsTrigger>
               </TabsList>
 
@@ -1114,6 +1166,107 @@ export default function Admin() {
                   </div>
                 )}
               </TabsContent>
+
+              {/* Returns/Exchanges Tab */}
+              <TabsContent value="returns">
+                {loading ? (
+                  <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+                ) : returnRequests.length === 0 ? (
+                  <Card className="border-0 shadow-lg"><CardContent className="py-12 text-center">
+                    <RotateCcw className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-500">No return or exchange requests yet</p>
+                  </CardContent></Card>
+                ) : (
+                  <Card className="border-0 shadow-lg">
+                    <CardContent className="p-0">
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b bg-gray-50">
+                              <th className="text-left p-4 font-semibold text-gray-600">Request ID</th>
+                              <th className="text-left p-4 font-semibold text-gray-600">Type</th>
+                              <th className="text-left p-4 font-semibold text-gray-600">Customer</th>
+                              <th className="text-left p-4 font-semibold text-gray-600">Order</th>
+                              <th className="text-left p-4 font-semibold text-gray-600">Items</th>
+                              <th className="text-left p-4 font-semibold text-gray-600">Refund Amount</th>
+                              <th className="text-left p-4 font-semibold text-gray-600">Status</th>
+                              <th className="text-left p-4 font-semibold text-gray-600">Date</th>
+                              <th className="text-left p-4 font-semibold text-gray-600">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {returnRequests.map((request) => (
+                              <tr key={request.id} className="border-b hover:bg-gray-50 transition-colors">
+                                <td className="p-4">
+                                  <span className="font-mono text-sm font-semibold text-gray-700">
+                                    RR-{request.id.slice(0, 6).toUpperCase()}
+                                  </span>
+                                </td>
+                                <td className="p-4">
+                                  <Badge className={request.request_type === 'return' ? 'bg-orange-100 text-orange-700 border-orange-200' : 'bg-purple-100 text-purple-700 border-purple-200'}>
+                                    {request.request_type === 'return' ? (
+                                      <><RotateCcw className="h-3 w-3 mr-1" /> Return</>
+                                    ) : (
+                                      <><ArrowRightLeft className="h-3 w-3 mr-1" /> Exchange</>
+                                    )}
+                                  </Badge>
+                                </td>
+                                <td className="p-4">
+                                  <div className="flex items-center gap-3">
+                                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                      <User className="h-4 w-4 text-primary" />
+                                    </div>
+                                    <div>
+                                      <p className="font-medium text-gray-900">{request.customer_name || 'Customer'}</p>
+                                      <p className="text-xs text-gray-500">{request.customer_email || request.customer_phone || '-'}</p>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="p-4">
+                                  <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
+                                    #{request.order_id.slice(0, 8)}
+                                  </span>
+                                </td>
+                                <td className="p-4">
+                                  <div className="text-sm text-gray-600">
+                                    {request.items.slice(0, 2).map((item, idx) => (
+                                      <div key={idx} className="truncate max-w-32">{item.name || 'Product'} x{item.quantity}</div>
+                                    ))}
+                                    {request.items.length > 2 && (
+                                      <span className="text-xs text-gray-400">+{request.items.length - 2} more</span>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="p-4">
+                                  <span className="font-bold text-green-600">₹{(request.refund_amount || 0).toLocaleString()}</span>
+                                </td>
+                                <td className="p-4">
+                                  <Badge className={getStatusColor(request.status)}>
+                                    {request.status}
+                                  </Badge>
+                                </td>
+                                <td className="p-4 text-sm text-gray-500">
+                                  {formatDate(request.created_at)}
+                                </td>
+                                <td className="p-4">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => { setSelectedReturnRequest(request); setReturnDetailOpen(true); }}
+                                    className="gap-1"
+                                  >
+                                    <Eye className="h-3 w-3" /> View
+                                  </Button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
             </Tabs>
 
             {/* Integration Status Footer */}
@@ -1312,6 +1465,139 @@ export default function Admin() {
                     Paid: {new Date(selectedOrder.paid_at).toLocaleString()}
                   </Badge>
                 )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Return Request Detail Dialog */}
+      <Dialog open={returnDetailOpen} onOpenChange={setReturnDetailOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {selectedReturnRequest?.request_type === 'return' ? (
+                <RotateCcw className="h-5 w-5 text-orange-500" />
+              ) : (
+                <ArrowRightLeft className="h-5 w-5 text-purple-500" />
+              )}
+              {selectedReturnRequest?.request_type === 'return' ? 'Return' : 'Exchange'} Request Details
+            </DialogTitle>
+          </DialogHeader>
+          {selectedReturnRequest && (
+            <div className="space-y-4">
+              {/* Request Info */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-sm text-gray-500">Request ID:</span>
+                  <p className="font-mono font-bold">RR-{selectedReturnRequest.id.slice(0, 6).toUpperCase()}</p>
+                </div>
+                <Badge className={getStatusColor(selectedReturnRequest.status)}>
+                  {selectedReturnRequest.status}
+                </Badge>
+              </div>
+
+              {/* Customer Info */}
+              <div className="bg-gray-50 p-4 rounded-xl">
+                <h4 className="font-semibold mb-2 flex items-center gap-2">
+                  <User className="h-4 w-4" /> Customer Info
+                </h4>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <span className="text-gray-500">Name:</span>
+                    <p className="font-medium">{selectedReturnRequest.customer_name || 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Email:</span>
+                    <p className="font-medium">{selectedReturnRequest.customer_email || 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Phone:</span>
+                    <p className="font-medium">{selectedReturnRequest.customer_phone || 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Order ID:</span>
+                    <p className="font-mono text-xs">#{selectedReturnRequest.order_id.slice(0, 8)}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Items */}
+              <div>
+                <h4 className="font-semibold mb-2">Items to {selectedReturnRequest.request_type}</h4>
+                <div className="space-y-2">
+                  {selectedReturnRequest.items.map((item, idx) => (
+                    <div key={idx} className="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
+                      <div>
+                        <p className="font-medium">{item.name || 'Product'}</p>
+                        <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
+                      </div>
+                      <span className="font-bold">₹{((item.price || 0) * item.quantity).toLocaleString()}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Reason */}
+              <div>
+                <h4 className="font-semibold mb-2">Reason</h4>
+                <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">{selectedReturnRequest.reason}</p>
+              </div>
+
+              {/* Refund Amount */}
+              {selectedReturnRequest.request_type === 'return' && (
+                <div className="bg-green-50 p-4 rounded-xl flex justify-between items-center">
+                  <span className="font-semibold text-green-700">Refund Amount</span>
+                  <span className="text-2xl font-bold text-green-600">₹{(selectedReturnRequest.refund_amount || 0).toLocaleString()}</span>
+                </div>
+              )}
+
+              {/* Admin Actions */}
+              <div className="border-t pt-4">
+                <h4 className="font-semibold mb-3">Update Status</h4>
+                <div className="grid grid-cols-3 gap-2">
+                  {selectedReturnRequest.status === 'pending' && (
+                    <>
+                      <Button
+                        size="sm"
+                        className="bg-green-600 hover:bg-green-700 gap-1"
+                        onClick={() => handleUpdateReturnRequest(selectedReturnRequest.id, 'approved')}
+                      >
+                        <Check className="h-4 w-4" /> Approve
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        className="gap-1"
+                        onClick={() => handleUpdateReturnRequest(selectedReturnRequest.id, 'rejected')}
+                      >
+                        <X className="h-4 w-4" /> Reject
+                      </Button>
+                    </>
+                  )}
+                  {selectedReturnRequest.status === 'approved' && (
+                    <Button
+                      size="sm"
+                      className="bg-purple-600 hover:bg-purple-700 gap-1"
+                      onClick={() => handleUpdateReturnRequest(selectedReturnRequest.id, 'processing')}
+                    >
+                      <RefreshCw className="h-4 w-4" /> Processing
+                    </Button>
+                  )}
+                  {selectedReturnRequest.status === 'processing' && (
+                    <Button
+                      size="sm"
+                      className="bg-blue-600 hover:bg-blue-700 gap-1"
+                      onClick={() => handleUpdateReturnRequest(selectedReturnRequest.id, 'completed')}
+                    >
+                      <CheckCircle className="h-4 w-4" /> Complete
+                    </Button>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  Requested: {new Date(selectedReturnRequest.created_at).toLocaleString()}
+                  {selectedReturnRequest.processed_at && ` • Processed: ${new Date(selectedReturnRequest.processed_at).toLocaleString()}`}
+                </p>
               </div>
             </div>
           )}
