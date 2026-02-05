@@ -1,16 +1,61 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle, Star, Calendar, Phone, ArrowRight } from "lucide-react";
+import { CheckCircle, Star, Calendar, Phone, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import { SERVICES, COMPANY_INFO } from "@/lib/constants";
+import { COMPANY_INFO } from "@/lib/constants";
 import ServiceCard from "@/components/sections/ServiceCard";
 import cleanerMan from "@/assets/cleaner-man.png";
 
+interface Service {
+  id: string;
+  title: string;
+  description: string;
+  price: string;
+  rating?: number;
+  reviews?: number;
+  image: string;
+  features: string[];
+  duration?: string;
+}
+
 export default function ServicesPage() {
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchServices();
+  }, []);
+
+  const fetchServices = async () => {
+    try {
+      const res = await fetch("/api/services");
+      if (res.ok) {
+        const data = await res.json();
+        const formattedServices = data.map((s: any) => ({
+          id: s.id,
+          title: s.title,
+          description: s.description,
+          price: s.price?.toString().startsWith("From") ? s.price : `From ₹${s.price}`,
+          rating: s.rating || 4.8,
+          reviews: s.reviews || 0,
+          image: s.image,
+          features: s.features || [],
+          duration: s.duration
+        }));
+        setServices(formattedServices);
+      }
+    } catch (error) {
+      console.error("Failed to fetch services:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50">
       <Navbar />
@@ -120,11 +165,32 @@ export default function ServicesPage() {
             <h2 className="text-3xl font-display font-bold text-primary mb-12 text-center">
               Our Full Service Range
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {SERVICES.map((service) => (
-                <ServiceCard key={service.id} {...service} />
-              ))}
-            </div>
+            {loading ? (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="ml-2 text-slate-500">Loading services...</span>
+              </div>
+            ) : services.length === 0 ? (
+              <div className="text-center py-20 bg-white rounded-2xl border-2 border-dashed border-slate-200">
+                <h3 className="text-xl font-bold text-slate-900 mb-2">No services available</h3>
+                <p className="text-slate-500">Check back soon for our cleaning services.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {services.map((service) => (
+                  <ServiceCard 
+                    key={service.id} 
+                    id={service.id}
+                    title={service.title}
+                    description={service.description}
+                    price={service.price}
+                    rating={service.rating || 4.8}
+                    image={service.image}
+                    features={service.features}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </section>
 
@@ -149,11 +215,9 @@ export default function ServicesPage() {
             <div className="mt-12 p-6 bg-white/10 rounded-2xl backdrop-blur-md">
                <p className="text-xl font-bold mb-4 flex items-center justify-center gap-3">
                 <Phone className="h-6 w-6 text-orange-400" />
-                Get Quote on WhatsApp: {COMPANY_INFO.phone}
-              </p>
-              <Button className="bg-orange-500 hover:bg-orange-600 text-white font-bold h-12 px-8">
-                Chat Now
-              </Button>
+                  Call to Book: {COMPANY_INFO.phone}
+               </p>
+               <p className="text-sm text-blue-200">We deliver & provide service across Vijayawada and nearby areas.</p>
             </div>
           </div>
         </section>

@@ -1,8 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import ProductCard from "@/components/sections/ProductCard";
-import { PRODUCTS } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
@@ -10,17 +9,50 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Filter, ShoppingCart, CheckCircle } from "lucide-react";
+import { Search, Filter, ShoppingCart, CheckCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+interface Product {
+  id: string;
+  title: string;
+  category: string;
+  price: number;
+  original_price?: number;
+  rating: number;
+  image: string;
+  tag?: string;
+  stock?: number;
+  description?: string;
+}
 
 const CATEGORIES = ["All", "Disinfectants", "Phenyl", "Floor Cleaners", "Cleaning Tools", "Other"];
 
 export default function ProductsPage() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [priceRange, setPriceRange] = useState([0, 1500]);
+  const [priceRange, setPriceRange] = useState([0, 5000]);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredProducts = PRODUCTS.filter((product) => {
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const res = await fetch("/api/products");
+      if (res.ok) {
+        const data = await res.json();
+        setProducts(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch products:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredProducts = products.filter((product) => {
     const matchesCategory = selectedCategory === "All" || product.category === selectedCategory;
     const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
     const matchesSearch = product.title.toLowerCase().includes(searchQuery.toLowerCase());
@@ -62,7 +94,6 @@ export default function ProductsPage() {
               </div>
             </div>
           </div>
-          {/* Abstract background shapes */}
           <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-[600px] h-[600px] bg-blue-400/20 rounded-full blur-3xl pointer-events-none" />
         </div>
 
@@ -115,9 +146,9 @@ export default function ProductsPage() {
                       <span className="text-xs font-bold text-primary">₹0 - ₹{priceRange[1]}</span>
                     </div>
                     <Slider
-                      defaultValue={[1500]}
-                      max={5000}
-                      step={50}
+                      defaultValue={[5000]}
+                      max={10000}
+                      step={100}
                       value={[priceRange[1]]}
                       onValueChange={(val) => setPriceRange([0, val[0]])}
                       className="py-4"
@@ -148,7 +179,7 @@ export default function ProductsPage() {
 
                   <Button className="w-full bg-primary hover:bg-primary/90 font-bold" onClick={() => {
                     setSelectedCategory("All");
-                    setPriceRange([0, 5000]);
+                    setPriceRange([0, 10000]);
                     setSearchQuery("");
                   }}>
                     Reset Filters
@@ -179,7 +210,12 @@ export default function ProductsPage() {
                 </div>
               </div>
 
-              {filteredProducts.length === 0 ? (
+              {loading ? (
+                <div className="flex items-center justify-center py-20">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <span className="ml-2 text-slate-500">Loading products...</span>
+                </div>
+              ) : filteredProducts.length === 0 ? (
                 <div className="text-center py-20 bg-white rounded-2xl border-2 border-dashed border-slate-200">
                    <div className="h-16 w-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
                       <Search className="h-8 w-8 text-slate-200" />
@@ -190,7 +226,17 @@ export default function ProductsPage() {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filteredProducts.map((product) => (
-                    <ProductCard key={product.id} {...product} />
+                    <ProductCard 
+                      key={product.id} 
+                      id={product.id}
+                      title={product.title}
+                      category={product.category}
+                      price={product.price}
+                      originalPrice={product.original_price}
+                      rating={product.rating || 4.5}
+                      image={product.image}
+                      tag={product.tag}
+                    />
                   ))}
                 </div>
               )}
