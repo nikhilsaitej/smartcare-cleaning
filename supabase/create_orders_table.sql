@@ -1,4 +1,4 @@
--- Create the orders table for SmartCare Cleaning Solutions
+  -- Create the orders table for SmartCare Cleaning Solutions
 -- Run this in your Supabase SQL Editor: https://supabase.com/dashboard
 
 -- ============================================

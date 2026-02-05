@@ -1,10 +1,3 @@
--- Create the return_requests table for SmartCare Cleaning Solutions
--- Run this in your Supabase SQL Editor: https://supabase.com/dashboard
-
--- ============================================
--- RETURN REQUESTS TABLE
--- ============================================
-
 CREATE TABLE IF NOT EXISTS return_requests (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   order_id uuid NOT NULL,
@@ -81,3 +74,4 @@ CREATE TRIGGER return_requests_updated_at
   EXECUTE FUNCTION update_return_requests_updated_at();
 
 COMMENT ON TABLE return_requests IS 'Return and exchange requests from customers for delivered product orders';
+
