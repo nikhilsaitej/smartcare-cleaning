@@ -57,9 +57,10 @@ export const schemas = {
     name: z.string().min(1).max(200).trim(),
     description: z.string().max(2000).optional(),
     price: z.number().positive().max(1000000),
-    image_url: z.string().url().max(500).optional(),
+    image_url: z.string().url().max(500).optional().nullable(),
     category: z.string().max(100).optional(),
     stock: z.number().int().min(0).max(100000).optional(),
+    original_price: z.number().positive().max(1000000).optional(),
     is_bestseller: z.boolean().optional()
   }),
 
@@ -67,9 +68,10 @@ export const schemas = {
     name: z.string().min(1).max(200).trim().optional(),
     description: z.string().max(2000).optional(),
     price: z.number().positive().max(1000000).optional(),
-    image_url: z.string().url().max(500).optional(),
+    image_url: z.string().url().max(500).optional().nullable(),
     category: z.string().max(100).optional(),
     stock: z.number().int().min(0).max(100000).optional(),
+    original_price: z.number().positive().max(1000000).optional().nullable(),
     is_bestseller: z.boolean().optional()
   }),
 
@@ -78,7 +80,7 @@ export const schemas = {
     description: z.string().max(2000).optional(),
     price: z.number().positive().max(1000000),
     duration: z.string().max(50).optional(),
-    image_url: z.string().url().max(500).optional(),
+    image_url: z.string().url().max(500).optional().nullable(),
     category: z.string().max(100).optional()
   }),
 
@@ -87,7 +89,7 @@ export const schemas = {
     description: z.string().max(2000).optional(),
     price: z.number().positive().max(1000000).optional(),
     duration: z.string().max(50).optional(),
-    image_url: z.string().url().max(500).optional(),
+    image_url: z.string().url().max(500).optional().nullable(),
     category: z.string().max(100).optional()
   }),
 

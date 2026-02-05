@@ -320,16 +320,23 @@ export default function Admin() {
   const handleSaveProduct = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const productData = {
+    const imageUrl = formData.get("image_url") as string;
+    const productData: Record<string, any> = {
       name: formData.get("name") as string,
-      description: formData.get("description") as string,
+      description: formData.get("description") as string || undefined,
       price: parseFloat(formData.get("price") as string),
-      original_price: formData.get("original_price") ? parseFloat(formData.get("original_price") as string) : null,
-      image_url: formData.get("image_url") as string,
-      category: formData.get("category") as string,
-      stock_quantity: parseInt(formData.get("stock_quantity") as string) || 0,
-      in_stock: (parseInt(formData.get("stock_quantity") as string) || 0) > 0
+      category: formData.get("category") as string || undefined,
+      stock: parseInt(formData.get("stock_quantity") as string) || 0
     };
+    
+    if (imageUrl && imageUrl.trim()) {
+      productData.image_url = imageUrl;
+    }
+    
+    const origPrice = formData.get("original_price") as string;
+    if (origPrice && parseFloat(origPrice) > 0) {
+      productData.original_price = parseFloat(origPrice);
+    }
 
     try {
       const url = editingProduct ? `/api/admin/products/${editingProduct.id}` : "/api/admin/products";
@@ -372,14 +379,17 @@ export default function Admin() {
   const handleSaveService = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const serviceData = {
+    const imageUrl = formData.get("image_url") as string;
+    const serviceData: Record<string, any> = {
       name: formData.get("name") as string,
-      description: formData.get("description") as string,
+      description: formData.get("description") as string || undefined,
       price: parseFloat(formData.get("price") as string),
-      image_url: formData.get("image_url") as string,
-      duration: formData.get("duration") as string,
-      is_active: true
+      duration: formData.get("duration") as string || undefined
     };
+    
+    if (imageUrl && imageUrl.trim()) {
+      serviceData.image_url = imageUrl;
+    }
 
     try {
       const url = editingService ? `/api/admin/services/${editingService.id}` : "/api/admin/services";
