@@ -80,7 +80,7 @@ export default function ImageUpload({
       formData.append("folder", folder);
 
       const uploadRes = await fetch(
-        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+        `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`,
         {
           method: "POST",
           body: formData,

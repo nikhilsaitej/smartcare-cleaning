@@ -91,6 +91,17 @@ export async function registerRoutes(
     res.json({ success: true, verified: true });
   }));
 
+  app.get("/api/upload/signature", verifyAdmin, (req: Request, res: Response) => {
+    try {
+      const folder = (req.query.folder as string) || "smartcare";
+      const signatureData = getCloudinarySignature(folder);
+      res.json(signatureData);
+    } catch (error) {
+      console.error("Signature generation error:", error);
+      res.status(500).json({ error: "Failed to generate upload signature" });
+    }
+  });
+
   app.get("/api/config", (req: Request, res: Response) => {
     res.json({
       supabaseUrl: process.env.SUPABASE_URL,

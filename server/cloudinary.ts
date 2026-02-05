@@ -33,7 +33,7 @@ export const getCloudinarySignature = (folder: string = 'smartcare') => {
 
   const signature = cloudinary.utils.api_sign_request(
     { timestamp, folder },
-    config.api_secret
+    process.env.CLOUDINARY_API_SECRET || ''
   );
 
   return {
