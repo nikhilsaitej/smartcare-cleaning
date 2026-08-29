@@ -121,16 +121,82 @@
     text-shadow: 0 1px 2px rgba(0,0,0,0.1);
   }
   
+  /* Premium Glass Card Effect */
   .glass-card {
     background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(8px);
     border: 1px solid rgba(255, 255, 255, 0.5);
   }
   
+  /* Gradient Text for Headings */
   .gradient-text {
     background: linear-gradient(to right, hsl(var(--brand-blue-deep)), hsl(var(--brand-blue-bright)));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+  }
+
+  /* Premium Shadows */
+  .shadow-premium {
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+  }
+
+  .shadow-premium-lg {
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
+  }
+
+  /* Professional Button Styles */
+  .btn-premium {
+    @apply font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl;
+  }
+
+  /* Card Hover Effects */
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-2xl hover:translate-y-[-4px];
+  }
+
+  /* Professional Gradient Backgrounds */
+  .bg-gradient-professional {
+    background: linear-gradient(135deg, hsl(var(--brand-blue-deep)), hsl(var(--brand-blue-bright)));
+  }
+
+  /* Payment Security Badge */
+  .security-badge {
+    @apply inline-flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 rounded-lg text-sm font-semibold text-green-700;
+  }
+
+  /* Premium Divider */
+  .divider-premium {
+    @apply border-t border-gray-200 my-6;
+  }
+
+  /* Smooth Transitions */
+  .smooth-transition {
+    @apply transition-all ease-linear duration-300;
+  }
+
+  /* Text Truncate Multi-line */
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Badge Styles */
+  .badge-premium {
+    @apply inline-flex items-center gap-1 px-3 py-1 rounded-full font-bold text-xs uppercase tracking-wider;
+  }
+
+  .badge-success {
+    @apply inline-flex items-center gap-1 px-3 py-1 rounded-full font-bold text-xs uppercase tracking-wider bg-green-100 text-green-700;
+  }
+
+  .badge-warning {
+    @apply inline-flex items-center gap-1 px-3 py-1 rounded-full font-bold text-xs uppercase tracking-wider bg-yellow-100 text-yellow-700;
+  }
+
+  .badge-info {
+    @apply inline-flex items-center gap-1 px-3 py-1 rounded-full font-bold text-xs uppercase tracking-wider bg-blue-100 text-blue-700;
   }
 }
 
@@ -138,10 +204,57 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply font-sans antialiased bg-background text-foreground;
   }
+
+  /* Professional Typography */
   h1, h2, h3, h4, h5, h6 {
     @apply font-display font-bold tracking-tight;
+  }
+
+  h1 {
+    @apply text-4xl md:text-5xl lg:text-6xl leading-tight;
+  }
+
+  h2 {
+    @apply text-3xl md:text-4xl leading-snug;
+  }
+
+  h3 {
+    @apply text-2xl md:text-3xl leading-snug;
+  }
+
+  h4 {
+    @apply text-xl md:text-2xl;
+  }
+
+  h5 {
+    @apply text-lg md:text-xl;
+  }
+
+  h6 {
+    @apply text-base md:text-lg;
+  }
+
+  /* Professional Links */
+  a {
+    @apply text-blue-600 hover:text-blue-700 transition-colors duration-200 underline-offset-2 hover:underline;
+  }
+
+  /* Button Styles */
+  button {
+    @apply transition-all duration-200;
+  }
+
+  /* Form Inputs */
+  input, textarea, select {
+    @apply border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all;
+  }
+
+  /* Selection Color */
+  ::selection {
+    @apply bg-blue-100 text-blue-900;
   }
 }

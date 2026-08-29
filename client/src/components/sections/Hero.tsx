@@ -41,21 +41,21 @@ export default function Hero() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
               </span>
-              #1 Cleaning Service in Vijayawada
+              ✨ #1 Cleaning Service in Vijayawada • 4.9★ Rating
             </div>
             
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold font-display text-primary leading-[1.1] mb-6">
-              Professional <br />
+              Your Home <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">
-                Cleaning Solutions
+                Deserves to Shine
               </span>
             </h1>
             
             <p className="text-lg text-gray-600 max-w-xl mb-6 leading-relaxed">
-              Experience the joy of a spotless home. We provide top-rated deep cleaning services and high-quality housekeeping supplies.
+              Professional deep cleaning services that transform your home in hours, not days. Same-day booking available. Join 5000+ happy customers.
             </p>
 
-            <div className="flex flex-wrap gap-4 text-sm text-gray-700 font-medium mb-6">
+            <div className="flex flex-wrap gap-3 text-sm text-gray-700 font-medium mb-8">
               <div className="flex items-center gap-2 bg-white/70 px-3 py-1.5 rounded-full shadow-sm">
                 <CheckCircle className="h-4 w-4 text-green-500" />
                 <span>Verified Professionals</span>
@@ -66,22 +66,35 @@ export default function Hero() {
               </div>
               <div className="flex items-center gap-2 bg-white/70 px-3 py-1.5 rounded-full shadow-sm">
                 <CheckCircle className="h-4 w-4 text-green-500" />
-                <span>100% Satisfaction</span>
+                <span>100% Satisfaction Guaranteed</span>
               </div>
             </div>
 
             <div className="flex flex-wrap gap-4">
               <Link href="/services">
-                <Button size="lg" className="bg-orange-500 hover:bg-orange-600 text-white font-bold px-8 h-12 shadow-lg shadow-orange-500/20 rounded-full">
-                  Book a Service
+                <Button size="lg" className="bg-orange-500 hover:bg-orange-600 text-white font-bold px-8 h-12 shadow-lg shadow-orange-500/20 rounded-full group">
+                  <span>Book Service Today</span>
+                  <span className="ml-2">→</span>
                 </Button>
               </Link>
               <Link href="/products">
                 <Button size="lg" variant="outline" className="border-primary text-primary hover:bg-blue-50 font-bold px-8 h-12 rounded-full bg-white/50">
-                  View Products
+                  Browse Products
                 </Button>
               </Link>
             </div>
+
+            {/* Social proof mini */}
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.5 }}
+              className="pt-6 border-t border-blue-200 mt-6"
+            >
+              <p className="text-xs text-gray-500">
+                🎁 <span className="font-bold text-gray-700">New customer?</span> Get <span className="text-orange-600 font-bold">15% off</span> your first booking
+              </p>
+            </motion.div>
           </motion.div>
         </div>
 

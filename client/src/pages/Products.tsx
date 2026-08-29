@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import PageHeader from "@/components/sections/PageHeader";
 import ProductCard from "@/components/sections/ProductCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,8 +10,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Filter, ShoppingCart, CheckCircle, Loader2 } from "lucide-react";
+import { Search, Filter, ShoppingCart, CheckCircle, Loader2, Package, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 interface Product {
   id: string;
@@ -71,44 +73,21 @@ export default function ProductsPage() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-white">
       <Navbar />
-      <main className="pt-24 pb-20">
-        {/* Banner */}
-        <div className="bg-primary text-white py-12 relative overflow-hidden">
-          <div className="container mx-auto px-4 relative z-10">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-              <div className="max-w-xl text-center md:text-left">
-                <nav className="text-xs font-medium text-blue-200 mb-4 uppercase tracking-widest">Home • Products</nav>
-                <h1 className="text-4xl md:text-5xl font-display font-bold mb-4">HOUSEKEEPING SUPPLIES</h1>
-                <p className="text-blue-100 text-lg">Top Quality Cleaners, Disinfectants & Cleaning Tools</p>
-                <div className="flex flex-wrap gap-4 mt-6 justify-center md:justify-start">
-                  <div className="flex items-center gap-2 bg-white/10 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm">
-                    <CheckCircle className="h-4 w-4 text-green-400" />
-                    Same-Day Delivery
-                  </div>
-                  <div className="flex items-center gap-2 bg-white/10 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm">
-                    <CheckCircle className="h-4 w-4 text-green-400" />
-                    Affordable Pricing
-                  </div>
-                </div>
-              </div>
-              <div className="hidden lg:block">
-                <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20 text-center">
-                  <div className="h-16 w-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-orange-500/20">
-                     <ShoppingCart className="h-8 w-8 text-white" />
-                  </div>
-                  <h3 className="text-xl font-bold">Trusted by</h3>
-                  <p className="text-3xl font-extrabold text-orange-400">100+ Local</p>
-                  <p className="text-sm font-medium uppercase tracking-wider">Customers</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-[600px] h-[600px] bg-blue-400/20 rounded-full blur-3xl pointer-events-none" />
-        </div>
+      
+      {/* Professional Page Header */}
+      <PageHeader 
+        title="Premium Cleaning Supplies"
+        description="Industrial-grade cleaning products and supplies delivered to your doorstep. Fast shipping, best prices, guaranteed quality."
+        breadcrumb="Shop All Products"
+        icon={<Package className="w-8 h-8 text-white" />}
+        backgroundGradient="from-blue-600 via-blue-700 to-blue-800"
+      />
 
-        <div className="container mx-auto px-4 mt-12">
+      <main className="py-0">
+        <div className="container mx-auto px-4 py-12">
+          {/* Filters and Controls */}
           {/* Category Tabs */}
           <div className="flex flex-wrap gap-2 mb-12 justify-center">
             {CATEGORIES.map((cat) => (

@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle, Star, Calendar, Phone, ArrowRight, Loader2 } from "lucide-react";
+import { CheckCircle, Star, Calendar, Phone, ArrowRight, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import PageHeader from "@/components/sections/PageHeader";
 import { COMPANY_INFO } from "@/lib/constants";
 import ServiceCard from "@/components/sections/ServiceCard";
 import cleanerMan from "@/assets/cleaner-man.png";
@@ -57,25 +58,45 @@ export default function ServicesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-white">
       <Navbar />
-      <main className="pt-24 pb-20">
-        {/* Page Header */}
-        <section className="bg-primary text-white py-16 relative overflow-hidden">
-           <div className="absolute inset-0 opacity-10 pointer-events-none">
-            <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-white blur-3xl"></div>
-            <div className="absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-blue-400 blur-3xl"></div>
-          </div>
-          <div className="container mx-auto px-4 relative z-10 text-center">
-            <h1 className="text-4xl md:text-5xl font-display font-bold mb-4">Our Services</h1>
-            <p className="text-blue-100 text-lg max-w-2xl mx-auto">
-              Professional & Affordable Cleaning Solutions in Vijayawada. 
-              One-Time & Regular Cleaning Options for Homes, Offices, and Shops.
-            </p>
+      
+      {/* Professional Page Header */}
+      <PageHeader 
+        title="Professional Cleaning Services"
+        description="Expert home and office cleaning services. Licensed professionals, guaranteed satisfaction, flexible scheduling available 24/7."
+        breadcrumb="Our Services"
+        icon={<Sparkles className="w-8 h-8 text-white" />}
+        backgroundGradient="from-green-600 via-green-700 to-blue-600"
+      />
+
+      <main className="pb-20">
+        {/* Quick Stats Bar */}
+        <section className="py-8 bg-gradient-to-r from-slate-50 to-blue-50 border-b border-gray-200">
+          <div className="container mx-auto px-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {[
+                { label: "Services", value: "50+" },
+                { label: "Professionals", value: "200+" },
+                { label: "Happy Customers", value: "5000+" },
+                { label: "Satisfaction Rate", value: "99%" }
+              ].map((stat, i) => (
+                <motion.div 
+                  key={i}
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  className="text-center"
+                >
+                  <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">{stat.value}</p>
+                  <p className="text-sm text-gray-600 font-medium">{stat.label}</p>
+                </motion.div>
+              ))}
+            </div>
           </div>
         </section>
 
-        {/* Hero-like Service Section */}
+        {/* Home Cleaning Services Section */}
         <section className="py-16">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
